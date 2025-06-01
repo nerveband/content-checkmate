@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SparklesIcon, DocumentDuplicateIcon } from './icons';
 import { downloadImage } from '../services/fluxService';
-import { Lightbox } from './Lightbox';
+import { EnhancedLightbox } from './EnhancedLightbox';
 
 interface GeneratedImageDisplayProps {
   imageUrl: string | null;
@@ -20,7 +20,7 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   onGenerateAnother,
   onDownload
 }) => {
-  const [lightboxImage, setLightboxImage] = useState<{url: string, title: string, isOriginal: boolean} | null>(null);
+  const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(null);
 
   const handleDownload = async () => {
     if (imageUrl) {
@@ -33,13 +33,32 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
     }
   };
 
-  const handleImageClick = (url: string, title: string, isOriginal: boolean = false) => {
-    setLightboxImage({ url, title, isOriginal });
+  const handleImageClick = (index: number) => {
+    setLightboxImageIndex(index);
   };
 
   const handleCloseLightbox = () => {
-    setLightboxImage(null);
+    setLightboxImageIndex(null);
   };
+
+  // Create lightbox images array
+  const lightboxImages = [];
+  if (originalImageUrl) {
+    lightboxImages.push({
+      url: originalImageUrl,
+      alt: 'Original image',
+      title: 'Original Image'
+    });
+  }
+  if (imageUrl) {
+    lightboxImages.push({
+      url: imageUrl,
+      alt: 'AI generated edited image',
+      title: `AI Generated: ${prompt}`,
+      downloadFilename: `ai-edited-image-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`,
+      onDownload: handleDownload
+    });
+  }
 
   if (!imageUrl) {
     return null;
@@ -57,7 +76,7 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
               <h5 className="text-sm font-medium text-neutral-300">Original</h5>
               <div 
                 className="border-2 border-neutral-700 rounded-lg overflow-hidden cursor-pointer hover:border-neutral-500 transition-colors"
-                onClick={() => handleImageClick(originalImageUrl, 'Original Image', true)}
+                onClick={() => handleImageClick(0)}
               >
                 <img 
                   src={originalImageUrl} 
@@ -72,7 +91,7 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
             <h5 className="text-sm font-medium text-yellow-400">AI Generated</h5>
             <div 
               className="border-2 border-yellow-500/50 rounded-lg overflow-hidden cursor-pointer hover:border-yellow-400 transition-colors"
-              onClick={() => handleImageClick(imageUrl, `AI Generated: ${prompt}`)}
+              onClick={() => handleImageClick(originalImageUrl ? 1 : 0)}
             >
               <img 
                 src={imageUrl} 
@@ -118,16 +137,16 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
         </p>
       </div>
 
-      {/* Lightbox */}
-      {lightboxImage && (
-        <Lightbox
+      {/* Enhanced Lightbox */}
+      {lightboxImageIndex !== null && (
+        <EnhancedLightbox
           isOpen={true}
           onClose={handleCloseLightbox}
-          imageUrl={lightboxImage.url}
-          imageAlt={lightboxImage.title}
-          title={lightboxImage.title}
-          onDownload={lightboxImage.isOriginal ? undefined : handleDownload}
-          downloadFilename={lightboxImage.isOriginal ? undefined : `ai-edited-image-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`}
+          images={lightboxImages}
+          currentIndex={lightboxImageIndex}
+          onIndexChange={setLightboxImageIndex}
+          comparisonImage={originalImageUrl && lightboxImageIndex === 1 ? originalImageUrl : undefined}
+          comparisonTitle={originalImageUrl && lightboxImageIndex === 1 ? "Original" : undefined}
         />
       )}
     </div>

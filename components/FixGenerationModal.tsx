@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XCircleIcon, LoadingSpinner, SparklesIcon, DocumentDuplicateIcon } from './icons';
 import { GeneratedImageDisplay } from './GeneratedImageDisplay';
 import { ImageHistoryGrid } from './ImageHistoryGrid';
-import { Lightbox } from './Lightbox';
+import { EnhancedLightbox } from './EnhancedLightbox';
 import { downloadImage, type FluxModelName } from '../services/fluxService';
 import type { GeneratedFixImage, AnalysisTableItem } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -46,7 +46,7 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
 }) => {
   const [editablePrompt, setEditablePrompt] = useState('');
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
-  const [selectedHistoryImage, setSelectedHistoryImage] = useState<GeneratedFixImage | null>(null);
+  const [selectedHistoryImageIndex, setSelectedHistoryImageIndex] = useState<number | null>(null);
   const [localSelectedModel, setLocalSelectedModel] = useState<FluxModelName>(selectedFluxModel);
   const [timer, setTimer] = useState<number | null>(null);
 
@@ -375,7 +375,7 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
                   >
                     <div 
                       className="aspect-square overflow-hidden cursor-pointer"
-                      onClick={() => setSelectedHistoryImage(fix)}
+                      onClick={() => setSelectedHistoryImageIndex(fixImagesHistory.indexOf(fix))}
                     >
                       <img 
                         src={fix.imageUrl} 
@@ -429,19 +429,23 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
         </div>
       </div>
       
-      {/* Lightbox for history images */}
-      {selectedHistoryImage && (
-        <Lightbox
+      {/* Enhanced Lightbox for history images */}
+      {selectedHistoryImageIndex !== null && (
+        <EnhancedLightbox
           isOpen={true}
-          onClose={() => setSelectedHistoryImage(null)}
-          imageUrl={selectedHistoryImage.imageUrl}
-          imageAlt={`AI Fix: ${selectedHistoryImage.generatedPrompt}`}
-          title={selectedHistoryImage.generatedPrompt}
-          onDownload={async () => {
-            const timestamp = new Date(selectedHistoryImage.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-');
-            await downloadImage(selectedHistoryImage.imageUrl, `fixed-image-${timestamp}.png`);
-          }}
-          downloadFilename={`fixed-image-${new Date(selectedHistoryImage.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`}
+          onClose={() => setSelectedHistoryImageIndex(null)}
+          images={fixImagesHistory.map((fix) => ({
+            url: fix.imageUrl,
+            alt: `AI Fix: ${fix.generatedPrompt}`,
+            title: fix.generatedPrompt,
+            downloadFilename: `fixed-image-${new Date(fix.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`,
+            onDownload: async () => {
+              const timestamp = new Date(fix.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-');
+              await downloadImage(fix.imageUrl, `fixed-image-${timestamp}.png`);
+            }
+          }))}
+          currentIndex={selectedHistoryImageIndex}
+          onIndexChange={setSelectedHistoryImageIndex}
         />
       )}
     </div>

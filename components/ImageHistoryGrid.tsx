@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DocumentDuplicateIcon, Trash2Icon } from './icons';
 import { downloadImage } from '../services/fluxService';
-import { Lightbox } from './Lightbox';
+import { EnhancedLightbox } from './EnhancedLightbox';
 import type { GeneratedImage } from '../types';
 
 interface ImageHistoryGridProps {
@@ -13,20 +13,28 @@ export const ImageHistoryGrid: React.FC<ImageHistoryGridProps> = ({
   images,
   onClearHistory
 }) => {
-  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   const handleDownload = async (image: GeneratedImage) => {
     const timestamp = new Date(image.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-');
     await downloadImage(image.imageUrl, `ai-edited-${timestamp}.png`);
   };
 
-  const handleImageClick = (image: GeneratedImage) => {
-    setSelectedImage(image);
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
   };
 
   const handleCloseLightbox = () => {
-    setSelectedImage(null);
+    setSelectedImageIndex(null);
   };
+
+  const lightboxImages = images.map((image) => ({
+    url: image.imageUrl,
+    alt: `Generated: ${image.prompt}`,
+    title: image.prompt,
+    downloadFilename: `ai-edited-${new Date(image.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`,
+    onDownload: () => handleDownload(image)
+  }));
 
   const formatTimestamp = (timestamp: number): string => {
     const date = new Date(timestamp);
@@ -53,7 +61,7 @@ export const ImageHistoryGrid: React.FC<ImageHistoryGridProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {images.map((image) => (
+        {images.map((image, index) => (
           <div 
             key={image.id} 
             className="bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden hover:border-yellow-500/50 transition-all duration-200 group"
@@ -61,7 +69,7 @@ export const ImageHistoryGrid: React.FC<ImageHistoryGridProps> = ({
             {/* Image */}
             <div 
               className="aspect-square overflow-hidden cursor-pointer"
-              onClick={() => handleImageClick(image)}
+              onClick={() => handleImageClick(index)}
             >
               <img 
                 src={image.imageUrl} 
@@ -107,16 +115,14 @@ export const ImageHistoryGrid: React.FC<ImageHistoryGridProps> = ({
         </p>
       </div>
 
-      {/* Lightbox */}
-      {selectedImage && (
-        <Lightbox
+      {/* Enhanced Lightbox */}
+      {selectedImageIndex !== null && (
+        <EnhancedLightbox
           isOpen={true}
           onClose={handleCloseLightbox}
-          imageUrl={selectedImage.imageUrl}
-          imageAlt={`Generated: ${selectedImage.prompt}`}
-          title={selectedImage.prompt}
-          onDownload={() => handleDownload(selectedImage)}
-          downloadFilename={`ai-edited-${new Date(selectedImage.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`}
+          images={lightboxImages}
+          currentIndex={selectedImageIndex}
+          onIndexChange={setSelectedImageIndex}
         />
       )}
     </div>
