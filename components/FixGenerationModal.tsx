@@ -51,14 +51,15 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
   const [timer, setTimer] = useState<number | null>(null);
 
   useEffect(() => {
-    if (currentFixPrompt) {
+    if (currentFixPrompt && !isEditingPrompt) {
+      // Only update editablePrompt if we're not currently editing to preserve user changes
       setEditablePrompt(currentFixPrompt);
       // Only enter editing mode if there's no ready prompt and no generated image
       const shouldEdit = !isPromptReady && !currentFixedImage && !currentFixPrompt;
       console.log('Modal useEffect - isPromptReady:', isPromptReady, 'currentFixedImage:', currentFixedImage, 'currentFixPrompt:', currentFixPrompt, 'shouldEdit:', shouldEdit);
       setIsEditingPrompt(shouldEdit);
     }
-  }, [currentFixPrompt, isPromptReady, currentFixedImage]);
+  }, [currentFixPrompt, isPromptReady, currentFixedImage, isEditingPrompt]);
 
   // Count-up timer effect for image generation
   useEffect(() => {
