@@ -35,7 +35,7 @@ A comprehensive React-based web application that analyzes content against Meta's
 
 ## 🚀 Live Demo
 
-**Production URL**: [https://intuitive-solutions-content-policy-analyzer-cboiqoi2y.vercel.app](https://intuitive-solutions-content-policy-analyzer-cboiqoi2y.vercel.app)
+**Production URL**: [https://is-cp.wavedepth.com](https://is-cp.wavedepth.com)
 
 ## 🛠️ Technology Stack
 

@@ -48,7 +48,7 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
   const [selectedHistoryImage, setSelectedHistoryImage] = useState<GeneratedFixImage | null>(null);
   const [localSelectedModel, setLocalSelectedModel] = useState<FluxModelName>(selectedFluxModel);
-  const [countdown, setCountdown] = useState<number | null>(null);
+  const [timer, setTimer] = useState<number | null>(null);
 
   useEffect(() => {
     if (currentFixPrompt) {
@@ -60,21 +60,19 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
     }
   }, [currentFixPrompt, isPromptReady, currentFixedImage]);
 
-  // Countdown timer effect for image generation
+  // Count-up timer effect for image generation
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     
-    if (isLoadingGeneration && countdown === null) {
-      // Start countdown at 60 seconds (typical generation time)
-      setCountdown(60);
-    } else if (isLoadingGeneration && countdown !== null) {
-      if (countdown > 0) {
-        intervalId = setInterval(() => {
-          setCountdown(prev => prev !== null ? prev - 1 : null);
-        }, 1000);
-      }
+    if (isLoadingGeneration && timer === null) {
+      // Start timer at 0 seconds
+      setTimer(0);
+    } else if (isLoadingGeneration && timer !== null) {
+      intervalId = setInterval(() => {
+        setTimer(prev => prev !== null ? prev + 1 : null);
+      }, 1000);
     } else if (!isLoadingGeneration) {
-      setCountdown(null);
+      setTimer(null);
     }
     
     return () => {
@@ -82,7 +80,7 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
         clearInterval(intervalId);
       }
     };
-  }, [isLoadingGeneration, countdown]);
+  }, [isLoadingGeneration, timer]);
 
   useEffect(() => {
     setLocalSelectedModel(selectedFluxModel);
@@ -300,9 +298,9 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
                       <div className="text-center">
                         <LoadingSpinner className="w-8 h-8 text-purple-500 mx-auto mb-4" />
                         <p className="text-purple-400 font-medium">Generating Fixed Image...</p>
-                        {countdown !== null && (
+                        {timer !== null && (
                           <p className="text-neutral-400 text-sm mt-2">
-                            Estimated time remaining: {Math.max(0, countdown)}s
+                            Elapsed time: {timer}s
                           </p>
                         )}
                         <p className="text-neutral-500 text-xs mt-1">
