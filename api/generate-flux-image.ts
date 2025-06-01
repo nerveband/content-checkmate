@@ -5,6 +5,7 @@ interface FluxGenerationRequest {
   prompt: string;
   negativePrompt?: string;
   fluxModelVersionId: string;
+  replicateApiToken?: string;
 }
 
 interface ReplicatePrediction {
@@ -24,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { base64Image, prompt, negativePrompt, fluxModelVersionId }: FluxGenerationRequest = req.body;
+    const { base64Image, prompt, negativePrompt, fluxModelVersionId, replicateApiToken }: FluxGenerationRequest = req.body;
 
     if (!base64Image || !prompt || !fluxModelVersionId) {
       return res.status(400).json({ 
@@ -32,21 +33,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    if (!process.env.REPLICATE_API_TOKEN) {
-      console.error('REPLICATE_API_TOKEN environment variable not set');
-      return res.status(500).json({ message: 'Server configuration error' });
+    // Use provided API token or fall back to environment variable
+    const apiToken = replicateApiToken || process.env.REPLICATE_API_TOKEN;
+    if (!apiToken) {
+      console.error('No Replicate API token available');
+      return res.status(500).json({ message: 'Replicate API token is required' });
     }
 
     const replicateResponse = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+        'Authorization': `Token ${apiToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         version: fluxModelVersionId,
         input: {
-          input_image: `data:image/jpeg;base64,${base64Image}`,
+          input_image: base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`,
           prompt: prompt,
           negative_prompt: negativePrompt || '',
           num_outputs: 1,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { XCircleIcon, LoadingSpinner, SparklesIcon, DocumentDuplicateIcon } from './icons';
 import { GeneratedImageDisplay } from './GeneratedImageDisplay';
 import { ImageHistoryGrid } from './ImageHistoryGrid';
@@ -18,6 +18,8 @@ interface FixGenerationModalProps {
   isAllIssuesFix?: boolean;
   onGenerateAnother: () => void;
   onClearHistory: () => void;
+  onGenerateWithPrompt?: (prompt: string) => void;
+  isPromptReady?: boolean;
 }
 
 export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
@@ -32,8 +34,20 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
   targetIssue,
   isAllIssuesFix = false,
   onGenerateAnother,
-  onClearHistory
+  onClearHistory,
+  onGenerateWithPrompt,
+  isPromptReady = false
 }) => {
+  const [editablePrompt, setEditablePrompt] = useState('');
+  const [isEditingPrompt, setIsEditingPrompt] = useState(!isPromptReady);
+
+  useEffect(() => {
+    if (currentFixPrompt) {
+      setEditablePrompt(currentFixPrompt);
+      setIsEditingPrompt(!isPromptReady && !currentFixedImage);
+    }
+  }, [currentFixPrompt, isPromptReady, currentFixedImage]);
+
   if (!isOpen) return null;
 
   const getModalTitle = () => {
@@ -100,6 +114,66 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
                   <p className="text-neutral-400 mt-1"><MarkdownRenderer text={targetIssue.recommendation} /></p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Prompt Preview/Edit Section */}
+          {currentFixPrompt && (
+            <div className="bg-neutral-800/50 rounded-lg p-4 border border-neutral-700">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-medium text-purple-400">AI-Generated Edit Prompt</h3>
+                {!isEditingPrompt && !isLoadingGeneration && (
+                  <button
+                    onClick={() => setIsEditingPrompt(true)}
+                    className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white text-sm rounded-md transition-colors"
+                  >
+                    Edit Prompt
+                  </button>
+                )}
+              </div>
+              
+              {isEditingPrompt && !isLoadingGeneration ? (
+                <div className="space-y-4">
+                  <textarea
+                    value={editablePrompt}
+                    onChange={(e) => setEditablePrompt(e.target.value)}
+                    className="w-full h-32 p-3 bg-neutral-700 border border-neutral-600 rounded-md text-neutral-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="Enter editing instructions for the AI..."
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        if (onGenerateWithPrompt) {
+                          onGenerateWithPrompt(editablePrompt);
+                          setIsEditingPrompt(false);
+                        }
+                      }}
+                      disabled={!editablePrompt.trim()}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors flex items-center gap-2"
+                    >
+                      <SparklesIcon className="w-4 h-4" />
+                      Generate Fixed Image
+                    </button>
+                    {!isPromptReady && (
+                      <button
+                        onClick={() => {
+                          setEditablePrompt(currentFixPrompt);
+                          setIsEditingPrompt(false);
+                        }}
+                        className="px-4 py-2 bg-neutral-600 hover:bg-neutral-500 text-neutral-200 font-medium rounded-md transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-neutral-700/50 rounded-md p-3">
+                  <p className="text-neutral-300 text-sm font-mono leading-relaxed">
+                    {currentFixPrompt}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

@@ -169,6 +169,10 @@ const App: React.FC = () => {
   const [customApiKeyInput, setCustomApiKeyInput] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
+  // Replicate API key state
+  const [currentReplicateApiKeyStatus, setCurrentReplicateApiKeyStatus] = useState<'built-in' | 'custom' | 'none'>('none');
+  const [customReplicateApiKeyInput, setCustomReplicateApiKeyInput] = useState<string>('');
+
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null); // For image DataURL or video thumbnail DataURL
@@ -240,6 +244,18 @@ const App: React.FC = () => {
     return { key: null, source: 'none' };
   }, []);
 
+  const getEffectiveReplicateApiKey = useCallback((): { key: string | null, source: 'custom' | 'built-in' | 'none' } => {
+    const customKey = localStorage.getItem('customReplicateApiKey');
+    if (customKey && customKey.trim() !== "") {
+      return { key: customKey, source: 'custom' };
+    }
+    const envKey = process.env.REPLICATE_API_TOKEN;
+    if (envKey && envKey !== "MISSING_API_KEY" && envKey.trim() !== "") {
+      return { key: envKey, source: 'built-in' };
+    }
+    return { key: null, source: 'none' };
+  }, []);
+
   useEffect(() => {
     const { key, source } = getEffectiveApiKey();
     setCurrentApiKeyStatus(source);
@@ -260,6 +276,12 @@ const App: React.FC = () => {
       setAnalysisError("API Key is not configured. Please set a custom key in Settings or ensure a built-in key is available.");
     }
   }, [getEffectiveApiKey]);
+
+  useEffect(() => {
+    const { source } = getEffectiveReplicateApiKey();
+    setCurrentReplicateApiKeyStatus(source);
+    setCustomReplicateApiKeyInput(localStorage.getItem('customReplicateApiKey') || '');
+  }, [getEffectiveReplicateApiKey]);
 
 
   useEffect(() => {
@@ -654,6 +676,23 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSaveCustomReplicateApiKey = () => {
+    if (customReplicateApiKeyInput.trim()) {
+      localStorage.setItem('customReplicateApiKey', customReplicateApiKeyInput.trim());
+    } else {
+      localStorage.removeItem('customReplicateApiKey');
+    }
+    const { source } = getEffectiveReplicateApiKey();
+    setCurrentReplicateApiKeyStatus(source);
+  };
+
+  const handleClearCustomReplicateApiKey = () => {
+    localStorage.removeItem('customReplicateApiKey');
+    setCustomReplicateApiKeyInput('');
+    const { source } = getEffectiveReplicateApiKey();
+    setCurrentReplicateApiKeyStatus(source);
+  };
+
   const handleExclusionTagChange = (tagId: string) => {
     setSelectedExclusionTags(prev => {
       const newSet = new Set(prev);
@@ -702,10 +741,13 @@ const App: React.FC = () => {
     setImageGenerationError(null);
 
     try {
+      const { key: replicateApiKey } = getEffectiveReplicateApiKey();
       const result = await generateImage(
         selectedFluxModel,
         uploadedEditorImagePreview,
-        editingPrompt.trim()
+        editingPrompt.trim(),
+        undefined,
+        replicateApiKey || undefined
       );
 
       const newImage: GeneratedImage = {
@@ -748,25 +790,48 @@ const App: React.FC = () => {
     setCurrentTargetIssue(issue);
     setIsAllIssuesFix(false);
     setCurrentOriginalImageForFix(filePreview);
+    setCurrentFixedImage(null);
+    setCurrentFixPrompt('');
     setIsFixGenerationModalOpen(true);
 
     try {
       // Generate fix prompt using Gemini
       const fixPrompt = await generateFixPrompt(genAIClient, issue);
       setCurrentFixPrompt(fixPrompt);
+      // Stop here - let user review/edit prompt before generating image
+    } catch (error: any) {
+      console.error('Fix generation error:', error);
+      setFixGenerationError(error.message || 'Failed to generate fix prompt. Please try again.');
+    } finally {
+      setIsLoadingFixGeneration(false);
+    }
+  }, [genAIClient, filePreview]);
 
-      // Generate fixed image using FLUX
+  const handleGenerateWithPrompt = useCallback(async (prompt: string) => {
+    if (!filePreview) {
+      setFixGenerationError('No image to fix.');
+      return;
+    }
+
+    setIsLoadingFixGeneration(true);
+    setFixGenerationError(null);
+
+    try {
+      // Generate fixed image using FLUX with the provided prompt
+      const { key: replicateApiKey } = getEffectiveReplicateApiKey();
       const result = await generateImage(
         selectedFluxModel,
         filePreview,
-        fixPrompt
+        prompt,
+        undefined,
+        replicateApiKey || undefined
       );
 
       const newFixImage: GeneratedFixImage = {
         id: `fix-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        generatedPrompt: fixPrompt,
+        generatedPrompt: prompt,
         imageUrl: result.imageUrl,
-        originalAnalysisIssueId: issue.id,
+        originalAnalysisIssueId: currentTargetIssue?.id || 'custom-prompt',
         timestamp: Date.now(),
         modelUsed: selectedFluxModel
       };
@@ -774,12 +839,12 @@ const App: React.FC = () => {
       setGeneratedFixImagesHistory(prev => [newFixImage, ...prev]);
       setCurrentFixedImage(result.imageUrl);
     } catch (error: any) {
-      console.error('Fix generation error:', error);
-      setFixGenerationError(error.message || 'Failed to generate fix. Please try again.');
+      console.error('Image generation error:', error);
+      setFixGenerationError(error.message || 'Failed to generate image. Please try again.');
     } finally {
       setIsLoadingFixGeneration(false);
     }
-  }, [genAIClient, filePreview, selectedFluxModel]);
+  }, [filePreview, selectedFluxModel, currentTargetIssue, getEffectiveReplicateApiKey]);
 
   const handleSuggestAllFixes = useCallback(async (issues: AnalysisTableItem[]) => {
     if (!genAIClient || !filePreview || issues.length === 0) {
@@ -792,38 +857,22 @@ const App: React.FC = () => {
     setCurrentTargetIssue(null);
     setIsAllIssuesFix(true);
     setCurrentOriginalImageForFix(filePreview);
+    setCurrentFixedImage(null);
+    setCurrentFixPrompt('');
     setIsFixGenerationModalOpen(true);
 
     try {
       // Generate comprehensive fix prompt using Gemini
       const fixPrompt = await generateComprehensiveFixPrompt(genAIClient, issues);
       setCurrentFixPrompt(fixPrompt);
-
-      // Generate fixed image using FLUX
-      const result = await generateImage(
-        selectedFluxModel,
-        filePreview,
-        fixPrompt
-      );
-
-      const newFixImage: GeneratedFixImage = {
-        id: `fix-all-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        generatedPrompt: fixPrompt,
-        imageUrl: result.imageUrl,
-        originalAnalysisIssueId: 'all-issues',
-        timestamp: Date.now(),
-        modelUsed: selectedFluxModel
-      };
-
-      setGeneratedFixImagesHistory(prev => [newFixImage, ...prev]);
-      setCurrentFixedImage(result.imageUrl);
+      // Stop here - let user review/edit prompt before generating image
     } catch (error: any) {
       console.error('Comprehensive fix generation error:', error);
-      setFixGenerationError(error.message || 'Failed to generate comprehensive fix. Please try again.');
+      setFixGenerationError(error.message || 'Failed to generate comprehensive fix prompt. Please try again.');
     } finally {
       setIsLoadingFixGeneration(false);
     }
-  }, [genAIClient, filePreview, selectedFluxModel]);
+  }, [genAIClient, filePreview]);
 
   const handleGenerateAnotherFix = useCallback(() => {
     if (isAllIssuesFix && analysisResult) {
@@ -1038,12 +1087,56 @@ const App: React.FC = () => {
                   Clear Custom Key & Use Built-in
                 </button>
               </div>
+
+              {/* Replicate API Key Section */}
+              <div className="border-t border-neutral-700 pt-6">
+                <h3 className="text-lg font-semibold text-neutral-200 mb-4">Replicate API Configuration</h3>
+                
+                <div>
+                  <label htmlFor="custom-replicate-api-key" className="block text-sm font-medium text-neutral-300 mb-1">Custom Replicate API Key (Optional):</label>
+                  <input
+                    type="password"
+                    id="custom-replicate-api-key"
+                    value={customReplicateApiKeyInput}
+                    onChange={(e) => setCustomReplicateApiKeyInput(e.target.value)}
+                    placeholder="Enter your Replicate API Key for image editing features"
+                    className="w-full p-2.5 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 text-neutral-100 text-sm placeholder-neutral-500"
+                  />
+                  <p className="mt-2 text-xs text-neutral-400">
+                    Currently using: 
+                    <span className={`font-semibold ml-1 px-1.5 py-0.5 rounded text-xs
+                      ${currentReplicateApiKeyStatus === 'custom' ? 'bg-green-600/30 text-green-300' : 
+                        currentReplicateApiKeyStatus === 'built-in' ? 'bg-sky-600/30 text-sky-300' : 
+                        'bg-red-600/30 text-red-300'}`}>
+                      {currentReplicateApiKeyStatus === 'custom' ? 'Custom Key' : 
+                       currentReplicateApiKeyStatus === 'built-in' ? 'Built-in Key' : 
+                       'No Key Active'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                  <button
+                    onClick={handleSaveCustomReplicateApiKey}
+                    className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-md shadow-sm transition-colors text-sm"
+                  >
+                    Save Replicate Key
+                  </button>
+                  <button
+                    onClick={handleClearCustomReplicateApiKey}
+                    disabled={currentReplicateApiKeyStatus !== 'custom'}
+                    className="flex-1 px-4 py-2.5 bg-neutral-600 hover:bg-neutral-500 text-neutral-100 font-medium rounded-md shadow-sm transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Clear Replicate Key & Use Built-in
+                  </button>
+                </div>
+              </div>
               
               {/* Exclusion rules removed from settings */}
 
             </div>
              <p className="mt-6 text-xs text-neutral-500">
-                A custom API key will be stored in your browser's local storage.
+                Custom API keys will be stored in your browser's local storage.
             </p>
           </div>
         </div>
@@ -1461,6 +1554,8 @@ const App: React.FC = () => {
         isAllIssuesFix={isAllIssuesFix}
         onGenerateAnother={handleGenerateAnotherFix}
         onClearHistory={handleClearFixHistory}
+        onGenerateWithPrompt={handleGenerateWithPrompt}
+        isPromptReady={!!currentFixPrompt && !currentFixedImage}
       />
 
       <footer className="w-full max-w-5xl mt-12 text-center text-neutral-500 text-sm">

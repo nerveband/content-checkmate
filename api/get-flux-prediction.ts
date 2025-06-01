@@ -18,19 +18,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const predictionId = req.query.id;
+    const replicateApiToken = req.query.token;
 
     if (!predictionId || typeof predictionId !== 'string') {
       return res.status(400).json({ message: 'Missing or invalid prediction ID.' });
     }
 
-    if (!process.env.REPLICATE_API_TOKEN) {
-      console.error('REPLICATE_API_TOKEN environment variable not set');
-      return res.status(500).json({ message: 'Server configuration error' });
+    // Use provided API token or fall back to environment variable
+    const apiToken = replicateApiToken || process.env.REPLICATE_API_TOKEN;
+    if (!apiToken) {
+      console.error('No Replicate API token available');
+      return res.status(500).json({ message: 'Replicate API token is required' });
     }
 
     const replicateResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
       headers: {
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+        'Authorization': `Token ${apiToken}`,
       },
     });
 
