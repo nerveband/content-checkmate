@@ -797,6 +797,7 @@ const App: React.FC = () => {
     try {
       // Generate fix prompt using Gemini
       const fixPrompt = await generateFixPrompt(genAIClient, issue);
+      console.log('Generated fix prompt:', fixPrompt);
       setCurrentFixPrompt(fixPrompt);
       // Stop here - let user review/edit prompt before generating image
     } catch (error: any) {
@@ -827,6 +828,8 @@ const App: React.FC = () => {
         replicateApiKey || undefined
       );
 
+      console.log('FLUX generation completed:', result);
+      
       const newFixImage: GeneratedFixImage = {
         id: `fix-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         generatedPrompt: prompt,
@@ -838,6 +841,7 @@ const App: React.FC = () => {
 
       setGeneratedFixImagesHistory(prev => [newFixImage, ...prev]);
       setCurrentFixedImage(result.imageUrl);
+      console.log('Set currentFixedImage to:', result.imageUrl);
     } catch (error: any) {
       console.error('Image generation error:', error);
       setFixGenerationError(error.message || 'Failed to generate image. Please try again.');

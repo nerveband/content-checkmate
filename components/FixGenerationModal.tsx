@@ -39,12 +39,15 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
   isPromptReady = false
 }) => {
   const [editablePrompt, setEditablePrompt] = useState('');
-  const [isEditingPrompt, setIsEditingPrompt] = useState(!isPromptReady);
+  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
 
   useEffect(() => {
     if (currentFixPrompt) {
       setEditablePrompt(currentFixPrompt);
-      setIsEditingPrompt(!isPromptReady && !currentFixedImage);
+      // Only enter editing mode if there's no ready prompt and no generated image
+      const shouldEdit = !isPromptReady && !currentFixedImage && !currentFixPrompt;
+      console.log('Modal useEffect - isPromptReady:', isPromptReady, 'currentFixedImage:', currentFixedImage, 'currentFixPrompt:', currentFixPrompt, 'shouldEdit:', shouldEdit);
+      setIsEditingPrompt(shouldEdit);
     }
   }, [currentFixPrompt, isPromptReady, currentFixedImage]);
 
@@ -154,24 +157,40 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
                       <SparklesIcon className="w-4 h-4" />
                       Generate Fixed Image
                     </button>
-                    {!isPromptReady && (
-                      <button
-                        onClick={() => {
-                          setEditablePrompt(currentFixPrompt);
-                          setIsEditingPrompt(false);
-                        }}
-                        className="px-4 py-2 bg-neutral-600 hover:bg-neutral-500 text-neutral-200 font-medium rounded-md transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        setEditablePrompt(currentFixPrompt);
+                        setIsEditingPrompt(false);
+                      }}
+                      className="px-4 py-2 bg-neutral-600 hover:bg-neutral-500 text-neutral-200 font-medium rounded-md transition-colors"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               ) : (
-                <div className="bg-neutral-700/50 rounded-md p-3">
-                  <p className="text-neutral-300 text-sm font-mono leading-relaxed">
-                    {currentFixPrompt}
-                  </p>
+                <div className="space-y-3">
+                  <div className="bg-neutral-700/50 rounded-md p-3">
+                    <p className="text-neutral-300 text-sm font-mono leading-relaxed">
+                      {currentFixPrompt}
+                    </p>
+                  </div>
+                  {isPromptReady && !currentFixedImage && !isLoadingGeneration && (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          if (onGenerateWithPrompt) {
+                            onGenerateWithPrompt(editablePrompt);
+                          }
+                        }}
+                        disabled={!editablePrompt.trim()}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors flex items-center gap-2"
+                      >
+                        <SparklesIcon className="w-4 h-4" />
+                        Generate Fixed Image
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -206,12 +225,15 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
 
           {/* Generated Fix Display */}
           {currentFixedImage && !isLoadingGeneration && (
-            <GeneratedImageDisplay
-              imageUrl={currentFixedImage}
-              prompt={currentFixPrompt}
-              originalImageUrl={originalImageUrl}
-              onGenerateAnother={onGenerateAnother}
-            />
+            <>
+              {console.log('Rendering GeneratedImageDisplay with imageUrl:', currentFixedImage)}
+              <GeneratedImageDisplay
+                imageUrl={currentFixedImage}
+                prompt={currentFixPrompt}
+                originalImageUrl={originalImageUrl}
+                onGenerateAnother={onGenerateAnother}
+              />
+            </>
           )}
 
           {/* Fix History */}
