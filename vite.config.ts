@@ -13,6 +13,26 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      server: {
+        proxy: {
+          '/api': {
+            target: 'http://localhost:3001',
+            changeOrigin: true,
+            configure: (proxy, options) => {
+              // Fallback for when Vercel dev is not running
+              proxy.on('error', (err, req, res) => {
+                console.warn('API proxy error - make sure to run "npm run dev:vercel" in another terminal');
+                res.writeHead(503, {
+                  'Content-Type': 'application/json',
+                });
+                res.end(JSON.stringify({
+                  error: 'API server not available. Run "npm run dev:vercel" in another terminal for full functionality.'
+                }));
+              });
+            }
+          }
+        }
       }
     };
 });
