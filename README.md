@@ -72,10 +72,21 @@ A comprehensive React-based web application that analyzes content against Meta's
    REPLICATE_API_TOKEN=your_replicate_api_token_here
    \`\`\`
 
-4. **Run the development server**
+4. **Run the development servers**
+   
+   For **full functionality** including FLUX image editing, you need to run both servers:
+   
+   **Terminal 1** (Main React app):
    \`\`\`bash
    npm run dev
    \`\`\`
+   
+   **Terminal 2** (API endpoints for FLUX image generation):
+   \`\`\`bash
+   npm run dev:vercel
+   \`\`\`
+   
+   > **Note**: If you only run \`npm run dev\`, the content analysis features will work but FLUX image generation/editing will return 503 errors. Both servers are required for complete functionality.
 
 5. **Open your browser**
    Navigate to \`http://localhost:5173\`
