@@ -14,7 +14,7 @@ export interface FluxGenerationResult {
 export interface ReplicatePrediction {
   id: string;
   status: 'starting' | 'processing' | 'succeeded' | 'failed';
-  output?: string[] | null;
+  output?: string | null;
   error?: string | null;
   urls: {
     get: string;
@@ -194,8 +194,8 @@ async function pollForCompletion(predictionId: string, replicateApiToken?: strin
       const prediction: ReplicatePrediction = await response.json();
 
       if (prediction.status === 'succeeded') {
-        if (prediction.output && prediction.output.length > 0) {
-          return prediction.output[0];
+        if (prediction.output) {
+          return prediction.output;
         } else {
           throw new Error('Generation completed but no output received');
         }
@@ -227,14 +227,39 @@ async function pollForCompletion(predictionId: string, replicateApiToken?: strin
   throw new Error('Generation timeout - please try again');
 }
 
-export function downloadImage(imageUrl: string, filename: string = 'generated-image.png'): void {
-  const link = document.createElement('a');
-  link.href = imageUrl;
-  link.download = filename;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+export async function downloadImage(imageUrl: string, filename: string = 'generated-image.png'): Promise<void> {
+  try {
+    // For cross-origin images, we need to fetch as blob
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    
+    // Create object URL from blob
+    const objectUrl = URL.createObjectURL(blob);
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up object URL
+    URL.revokeObjectURL(objectUrl);
+  } catch (error) {
+    console.error('Error downloading image:', error);
+    // Fallback to direct link
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = filename;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }

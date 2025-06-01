@@ -214,6 +214,7 @@ const App: React.FC = () => {
   const [selectedFluxModel, setSelectedFluxModel] = useState<FluxModelName>('flux-kontext-pro');
   const [generatedImagesHistory, setGeneratedImagesHistory] = useState<GeneratedImage[]>([]);
   const [isLoadingImageGeneration, setIsLoadingImageGeneration] = useState<boolean>(false);
+  const [imageGenCountdown, setImageGenCountdown] = useState<number | null>(null);
   const [imageGenerationError, setImageGenerationError] = useState<string | null>(null);
   const [currentGeneratedImage, setCurrentGeneratedImage] = useState<string | null>(null);
   const [currentGeneratedPrompt, setCurrentGeneratedPrompt] = useState<string>('');
@@ -325,6 +326,30 @@ const App: React.FC = () => {
       setDrawableExcludedMap(new Map());
     }
   }, [analysisResult, fileType]);
+
+  // Countdown timer effect for image generation
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (isLoadingImageGeneration && imageGenCountdown === null) {
+      // Start countdown at 60 seconds (typical generation time)
+      setImageGenCountdown(60);
+    } else if (isLoadingImageGeneration && imageGenCountdown !== null) {
+      if (imageGenCountdown > 0) {
+        intervalId = setInterval(() => {
+          setImageGenCountdown(prev => prev !== null ? prev - 1 : null);
+        }, 1000);
+      }
+    } else if (!isLoadingImageGeneration) {
+      setImageGenCountdown(null);
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isLoadingImageGeneration, imageGenCountdown]);
 
   const resetFileState = (clearAlsoMediaText: boolean = false) => {
     setUploadedFile(null);
@@ -808,7 +833,7 @@ const App: React.FC = () => {
     }
   }, [genAIClient, filePreview]);
 
-  const handleGenerateWithPrompt = useCallback(async (prompt: string) => {
+  const handleGenerateWithPrompt = useCallback(async (prompt: string, model?: FluxModelName) => {
     if (!filePreview) {
       setFixGenerationError('No image to fix.');
       return;
@@ -817,11 +842,14 @@ const App: React.FC = () => {
     setIsLoadingFixGeneration(true);
     setFixGenerationError(null);
 
+    // Use provided model or fallback to selected model
+    const modelToUse = model || selectedFluxModel;
+
     try {
       // Generate fixed image using FLUX with the provided prompt
       const { key: replicateApiKey } = getEffectiveReplicateApiKey();
       const result = await generateImage(
-        selectedFluxModel,
+        modelToUse,
         filePreview,
         prompt,
         undefined,
@@ -836,7 +864,7 @@ const App: React.FC = () => {
         imageUrl: result.imageUrl,
         originalAnalysisIssueId: currentTargetIssue?.id || 'custom-prompt',
         timestamp: Date.now(),
-        modelUsed: selectedFluxModel
+        modelUsed: modelToUse
       };
 
       setGeneratedFixImagesHistory(prev => [newFixImage, ...prev]);
@@ -1437,6 +1465,11 @@ const App: React.FC = () => {
                   <p className="mt-4 text-lg text-neutral-300">
                     Generating your edited image... This may take a moment.
                   </p>
+                  {imageGenCountdown !== null && (
+                    <p className="text-neutral-400 text-sm mt-2">
+                      Estimated time remaining: {Math.max(0, imageGenCountdown)}s
+                    </p>
+                  )}
                   <p className="text-sm text-neutral-400 mt-1">Using {selectedFluxModel.replace('flux-kontext-', 'FLUX.1 Kontext ')} model</p>
                 </div>
               )}
@@ -1560,6 +1593,8 @@ const App: React.FC = () => {
         onClearHistory={handleClearFixHistory}
         onGenerateWithPrompt={handleGenerateWithPrompt}
         isPromptReady={!!currentFixPrompt && !currentFixedImage}
+        selectedFluxModel={selectedFluxModel}
+        onModelChange={setSelectedFluxModel}
       />
 
       <footer className="w-full max-w-5xl mt-12 text-center text-neutral-500 text-sm">

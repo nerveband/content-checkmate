@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { XCircleIcon, LoadingSpinner, SparklesIcon, DocumentDuplicateIcon } from './icons';
 import { GeneratedImageDisplay } from './GeneratedImageDisplay';
 import { ImageHistoryGrid } from './ImageHistoryGrid';
+import { Lightbox } from './Lightbox';
+import { downloadImage, type FluxModelName } from '../services/fluxService';
 import type { GeneratedFixImage, AnalysisTableItem } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -18,8 +20,10 @@ interface FixGenerationModalProps {
   isAllIssuesFix?: boolean;
   onGenerateAnother: () => void;
   onClearHistory: () => void;
-  onGenerateWithPrompt?: (prompt: string) => void;
+  onGenerateWithPrompt?: (prompt: string, model?: FluxModelName) => void;
   isPromptReady?: boolean;
+  selectedFluxModel?: FluxModelName;
+  onModelChange?: (model: FluxModelName) => void;
 }
 
 export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
@@ -36,10 +40,15 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
   onGenerateAnother,
   onClearHistory,
   onGenerateWithPrompt,
-  isPromptReady = false
+  isPromptReady = false,
+  selectedFluxModel = 'flux-kontext-pro',
+  onModelChange
 }) => {
   const [editablePrompt, setEditablePrompt] = useState('');
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
+  const [selectedHistoryImage, setSelectedHistoryImage] = useState<GeneratedFixImage | null>(null);
+  const [localSelectedModel, setLocalSelectedModel] = useState<FluxModelName>(selectedFluxModel);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   useEffect(() => {
     if (currentFixPrompt) {
@@ -50,6 +59,34 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
       setIsEditingPrompt(shouldEdit);
     }
   }, [currentFixPrompt, isPromptReady, currentFixedImage]);
+
+  // Countdown timer effect for image generation
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (isLoadingGeneration && countdown === null) {
+      // Start countdown at 60 seconds (typical generation time)
+      setCountdown(60);
+    } else if (isLoadingGeneration && countdown !== null) {
+      if (countdown > 0) {
+        intervalId = setInterval(() => {
+          setCountdown(prev => prev !== null ? prev - 1 : null);
+        }, 1000);
+      }
+    } else if (!isLoadingGeneration) {
+      setCountdown(null);
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isLoadingGeneration, countdown]);
+
+  useEffect(() => {
+    setLocalSelectedModel(selectedFluxModel);
+  }, [selectedFluxModel]);
 
   if (!isOpen) return null;
 
@@ -143,11 +180,43 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
                     className="w-full h-32 p-3 bg-neutral-700 border border-neutral-600 rounded-md text-neutral-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="Enter editing instructions for the AI..."
                   />
+                  
+                  {/* Model Selection */}
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-neutral-300">FLUX Model:</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setLocalSelectedModel('flux-kontext-pro')}
+                        className={`px-3 py-1 text-xs rounded-md transition-colors ${ 
+                          localSelectedModel === 'flux-kontext-pro'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-neutral-700 text-neutral-300 hover:bg-neutral-600'
+                        }`}
+                      >
+                        Pro
+                      </button>
+                      <button
+                        onClick={() => setLocalSelectedModel('flux-kontext-max')}
+                        className={`px-3 py-1 text-xs rounded-md transition-colors ${ 
+                          localSelectedModel === 'flux-kontext-max'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-neutral-700 text-neutral-300 hover:bg-neutral-600'
+                        }`}
+                      >
+                        Max
+                      </button>
+                    </div>
+                    <span className="text-xs text-neutral-500">
+                      {localSelectedModel === 'flux-kontext-pro' ? 'Faster, good quality' : 'Slower, maximum quality'}
+                    </span>
+                  </div>
+                  
                   <div className="flex gap-3">
                     <button
                       onClick={() => {
-                        if (onGenerateWithPrompt) {
-                          onGenerateWithPrompt(editablePrompt);
+                        if (onGenerateWithPrompt && onModelChange) {
+                          onModelChange(localSelectedModel);
+                          onGenerateWithPrompt(editablePrompt, localSelectedModel);
                           setIsEditingPrompt(false);
                         }
                       }}
@@ -176,19 +245,70 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
                     </p>
                   </div>
                   {isPromptReady && !currentFixedImage && !isLoadingGeneration && (
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          if (onGenerateWithPrompt) {
-                            onGenerateWithPrompt(editablePrompt);
-                          }
-                        }}
-                        disabled={!editablePrompt.trim()}
-                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors flex items-center gap-2"
-                      >
-                        <SparklesIcon className="w-4 h-4" />
-                        Generate Fixed Image
-                      </button>
+                    <div className="space-y-3">
+                      {/* Model Selection */}
+                      <div className="flex items-center gap-4">
+                        <label className="text-sm font-medium text-neutral-300">FLUX Model:</label>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setLocalSelectedModel('flux-kontext-pro')}
+                            className={`px-3 py-1 text-xs rounded-md transition-colors ${ 
+                              localSelectedModel === 'flux-kontext-pro'
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-neutral-700 text-neutral-300 hover:bg-neutral-600'
+                            }`}
+                          >
+                            Pro
+                          </button>
+                          <button
+                            onClick={() => setLocalSelectedModel('flux-kontext-max')}
+                            className={`px-3 py-1 text-xs rounded-md transition-colors ${ 
+                              localSelectedModel === 'flux-kontext-max'
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-neutral-700 text-neutral-300 hover:bg-neutral-600'
+                            }`}
+                          >
+                            Max
+                          </button>
+                        </div>
+                        <span className="text-xs text-neutral-500">
+                          {localSelectedModel === 'flux-kontext-pro' ? 'Faster, good quality' : 'Slower, maximum quality'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            if (onGenerateWithPrompt && onModelChange) {
+                              onModelChange(localSelectedModel);
+                              onGenerateWithPrompt(editablePrompt, localSelectedModel);
+                            }
+                          }}
+                          disabled={!editablePrompt.trim()}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <SparklesIcon className="w-4 h-4" />
+                          Generate Fixed Image
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Loading state with countdown */}
+                  {isLoadingGeneration && (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="text-center">
+                        <LoadingSpinner className="w-8 h-8 text-purple-500 mx-auto mb-4" />
+                        <p className="text-purple-400 font-medium">Generating Fixed Image...</p>
+                        {countdown !== null && (
+                          <p className="text-neutral-400 text-sm mt-2">
+                            Estimated time remaining: {Math.max(0, countdown)}s
+                          </p>
+                        )}
+                        <p className="text-neutral-500 text-xs mt-1">
+                          Using {localSelectedModel.replace('flux-kontext-', 'FLUX.1 Kontext ')} model
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -255,7 +375,10 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
                     key={fix.id}
                     className="bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden hover:border-purple-500/50 transition-all duration-200"
                   >
-                    <div className="aspect-square overflow-hidden">
+                    <div 
+                      className="aspect-square overflow-hidden cursor-pointer"
+                      onClick={() => setSelectedHistoryImage(fix)}
+                    >
                       <img 
                         src={fix.imageUrl} 
                         alt={`Fix: ${fix.generatedPrompt.slice(0, 50)}...`}
@@ -276,16 +399,9 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
                       </div>
                       
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           const timestamp = new Date(fix.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-');
-                          const link = document.createElement('a');
-                          link.href = fix.imageUrl;
-                          link.download = `fixed-image-${timestamp}.png`;
-                          link.target = '_blank';
-                          link.rel = 'noopener noreferrer';
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
+                          await downloadImage(fix.imageUrl, `fixed-image-${timestamp}.png`);
                         }}
                         className="w-full mt-2 px-2 py-1.5 bg-neutral-700 hover:bg-green-600 text-neutral-300 hover:text-white text-xs rounded transition-colors duration-200 flex items-center justify-center gap-1"
                         aria-label={`Download fixed image: ${fix.generatedPrompt.slice(0, 30)}...`}
@@ -314,6 +430,22 @@ export const FixGenerationModal: React.FC<FixGenerationModalProps> = ({
           )}
         </div>
       </div>
+      
+      {/* Lightbox for history images */}
+      {selectedHistoryImage && (
+        <Lightbox
+          isOpen={true}
+          onClose={() => setSelectedHistoryImage(null)}
+          imageUrl={selectedHistoryImage.imageUrl}
+          imageAlt={`AI Fix: ${selectedHistoryImage.generatedPrompt}`}
+          title={selectedHistoryImage.generatedPrompt}
+          onDownload={async () => {
+            const timestamp = new Date(selectedHistoryImage.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-');
+            await downloadImage(selectedHistoryImage.imageUrl, `fixed-image-${timestamp}.png`);
+          }}
+          downloadFilename={`fixed-image-${new Date(selectedHistoryImage.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`}
+        />
+      )}
     </div>
   );
 };

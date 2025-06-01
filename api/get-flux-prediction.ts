@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 interface ReplicatePrediction {
   id: string;
   status: 'starting' | 'processing' | 'succeeded' | 'failed';
-  output?: string[] | null;
+  output?: string | null;
   error?: string | null;
   urls: {
     get: string;

@@ -9,9 +9,9 @@ export async function generateFixPrompt(
     throw new Error('AI client not initialized');
   }
 
-  const prompt = `You are an expert at converting content policy violation descriptions into clear, actionable image editing instructions for FLUX.1 Kontext, an AI image editing model.
+  const prompt = `You are an expert at converting content policy violations into strategic image editing instructions for FLUX.1 Kontext that maintain the original message while ensuring compliance.
 
-Given the following content policy violation, generate a concise and specific editing instruction that would resolve the issue:
+Given the following content policy violation, generate a specific editing instruction that REPLACES problematic content with compliant alternatives that preserve the post's original intent and effectiveness:
 
 **Identified Content:** ${issue.identifiedContent}
 **Issue Description:** ${issue.issueDescription}
@@ -20,22 +20,27 @@ Given the following content policy violation, generate a concise and specific ed
 ${issue.boundingBox ? `**Location:** ${describeLocation(issue.boundingBox)}` : ''}
 
 Guidelines for your response:
-1. Be specific and actionable
-2. Focus on what needs to be changed, removed, or modified
-3. If a location is provided, include it in natural language
-4. Keep the instruction under 200 characters when possible
-5. Use imperative language (e.g., "Remove", "Replace", "Change")
-6. Consider the context and provide realistic alternatives
+1. Always suggest REPLACEMENT content, not just removal
+2. Preserve the original message and marketing intent
+3. Suggest visually appealing, brand-appropriate alternatives
+4. Consider the target audience and content purpose
+5. If location is provided, include it naturally
+6. Keep instruction under 200 characters when possible
+7. Use constructive language ("Replace with", "Transform into", "Change to")
 
-Output only the editing instruction, nothing else.
+Focus on solutions that:
+- Maintain visual impact and engagement
+- Keep the core message intact
+- Suggest specific, creative alternatives
+- Consider brand consistency and aesthetic appeal
 
 Examples:
-- "Remove the swastika symbol from the center of the image and replace it with a neutral geometric pattern"
-- "Cover the inappropriate text in the top-right corner with a solid color or pattern"
-- "Replace the violent imagery with peaceful nature scenery"
-- "Remove the branded logo from the bottom-left and fill with background texture"
+- "Replace the graphic violence with dynamic action poses and energy effects to maintain excitement"
+- "Transform the inappropriate text into bold, inspiring messaging that conveys the same energy"
+- "Change the controversial symbol to a modern, abstract logo that represents the same values"
+- "Replace the restricted content with vibrant lifestyle imagery that appeals to the same audience"
 
-Your editing instruction:`;
+Your strategic editing instruction:`;
 
   try {
     const response = await genAIClient.models.generateContent({
@@ -73,25 +78,31 @@ export async function generateComprehensiveFixPrompt(
     `${index + 1}. **${issue.identifiedContent}**: ${issue.issueDescription} | Recommendation: ${issue.recommendation}${issue.boundingBox ? ` | Location: ${describeLocation(issue.boundingBox)}` : ''}`
   ).join('\n');
 
-  const prompt = `You are an expert at converting multiple content policy violations into a single, coherent image editing instruction for FLUX.1 Kontext.
+  const prompt = `You are an expert at converting multiple content policy violations into strategic, comprehensive image editing instructions for FLUX.1 Kontext that preserve the original message while ensuring full compliance.
 
-Given these multiple violations found in one image, create a single comprehensive editing instruction that addresses all issues:
+Given these multiple violations found in one image, create a single comprehensive editing instruction that transforms ALL issues into compliant alternatives while maintaining visual impact and marketing effectiveness:
 
 ${issuesText}
 
 Guidelines:
-1. Combine all fixes into one logical instruction
-2. Prioritize the most critical violations first
-3. Be specific about locations when provided
-4. Keep the instruction clear and actionable
-5. Ensure the result would be a clean, policy-compliant image
-6. Use connecting words like "and", "while", "also" to flow naturally
+1. Suggest REPLACEMENT content for each violation, not just removal
+2. Maintain the original message, brand identity, and audience appeal
+3. Prioritize the most critical violations first
+4. Combine all fixes into one logical, flowing instruction
+5. Be specific about locations when provided
+6. Suggest creative, engaging alternatives that serve the same purpose
+7. Use connecting words like "and", "while", "also" to flow naturally
+8. Focus on preserving visual impact and engagement
 
-Output only the comprehensive editing instruction, nothing else.
+Ensure the result would be:
+- Policy-compliant across all violations
+- Visually appealing and professionally crafted
+- True to the original brand message and intent
+- Engaging for the target audience
 
-Example: "Remove the offensive symbol from the center of the image and replace with a neutral pattern, while also covering the inappropriate text in the top-right corner with a solid color overlay"
+Example: "Transform the controversial symbol in the center into a modern geometric logo that represents the same brand values, while replacing the inappropriate text in the top-right with bold, inspiring messaging that conveys the same energy and appeal"
 
-Your comprehensive editing instruction:`;
+Your comprehensive strategic editing instruction:`;
 
   try {
     const response = await genAIClient.models.generateContent({

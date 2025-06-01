@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SparklesIcon, DocumentDuplicateIcon } from './icons';
 import { downloadImage } from '../services/fluxService';
+import { Lightbox } from './Lightbox';
 
 interface GeneratedImageDisplayProps {
   imageUrl: string | null;
@@ -19,15 +20,25 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
   onGenerateAnother,
   onDownload
 }) => {
-  const handleDownload = () => {
+  const [lightboxImage, setLightboxImage] = useState<{url: string, title: string, isOriginal: boolean} | null>(null);
+
+  const handleDownload = async () => {
     if (imageUrl) {
       if (onDownload) {
         onDownload();
       } else {
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:]/g, '-');
-        downloadImage(imageUrl, `ai-edited-image-${timestamp}.png`);
+        await downloadImage(imageUrl, `ai-edited-image-${timestamp}.png`);
       }
     }
+  };
+
+  const handleImageClick = (url: string, title: string, isOriginal: boolean = false) => {
+    setLightboxImage({ url, title, isOriginal });
+  };
+
+  const handleCloseLightbox = () => {
+    setLightboxImage(null);
   };
 
   if (!imageUrl) {
@@ -44,11 +55,14 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
           {originalImageUrl && (
             <div className="space-y-2">
               <h5 className="text-sm font-medium text-neutral-300">Original</h5>
-              <div className="border-2 border-neutral-700 rounded-lg overflow-hidden">
+              <div 
+                className="border-2 border-neutral-700 rounded-lg overflow-hidden cursor-pointer hover:border-neutral-500 transition-colors"
+                onClick={() => handleImageClick(originalImageUrl, 'Original Image', true)}
+              >
                 <img 
                   src={originalImageUrl} 
                   alt="Original image" 
-                  className="w-full h-auto object-contain max-h-80"
+                  className="w-full h-auto object-contain max-h-80 hover:scale-105 transition-transform duration-200"
                 />
               </div>
             </div>
@@ -56,11 +70,14 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
           
           <div className="space-y-2">
             <h5 className="text-sm font-medium text-yellow-400">AI Generated</h5>
-            <div className="border-2 border-yellow-500/50 rounded-lg overflow-hidden">
+            <div 
+              className="border-2 border-yellow-500/50 rounded-lg overflow-hidden cursor-pointer hover:border-yellow-400 transition-colors"
+              onClick={() => handleImageClick(imageUrl, `AI Generated: ${prompt}`)}
+            >
               <img 
                 src={imageUrl} 
                 alt="AI generated edited image" 
-                className="w-full h-auto object-contain max-h-80"
+                className="w-full h-auto object-contain max-h-80 hover:scale-105 transition-transform duration-200"
               />
             </div>
           </div>
@@ -97,9 +114,22 @@ export const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
 
       <div className="text-center">
         <p className="text-xs text-neutral-500">
-          Tip: Each generation creates a unique variation. Try generating multiple versions to find the perfect edit!
+          Tip: Click on any image to view full size • Each generation creates a unique variation
         </p>
       </div>
+
+      {/* Lightbox */}
+      {lightboxImage && (
+        <Lightbox
+          isOpen={true}
+          onClose={handleCloseLightbox}
+          imageUrl={lightboxImage.url}
+          imageAlt={lightboxImage.title}
+          title={lightboxImage.title}
+          onDownload={lightboxImage.isOriginal ? undefined : handleDownload}
+          downloadFilename={lightboxImage.isOriginal ? undefined : `ai-edited-image-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`}
+        />
+      )}
     </div>
   );
 };

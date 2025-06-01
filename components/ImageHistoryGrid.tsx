@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DocumentDuplicateIcon, Trash2Icon } from './icons';
 import { downloadImage } from '../services/fluxService';
+import { Lightbox } from './Lightbox';
 import type { GeneratedImage } from '../types';
 
 interface ImageHistoryGridProps {
@@ -12,9 +13,19 @@ export const ImageHistoryGrid: React.FC<ImageHistoryGridProps> = ({
   images,
   onClearHistory
 }) => {
-  const handleDownload = (image: GeneratedImage) => {
+  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+
+  const handleDownload = async (image: GeneratedImage) => {
     const timestamp = new Date(image.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-');
-    downloadImage(image.imageUrl, `ai-edited-${timestamp}.png`);
+    await downloadImage(image.imageUrl, `ai-edited-${timestamp}.png`);
+  };
+
+  const handleImageClick = (image: GeneratedImage) => {
+    setSelectedImage(image);
+  };
+
+  const handleCloseLightbox = () => {
+    setSelectedImage(null);
   };
 
   const formatTimestamp = (timestamp: number): string => {
@@ -48,7 +59,10 @@ export const ImageHistoryGrid: React.FC<ImageHistoryGridProps> = ({
             className="bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden hover:border-yellow-500/50 transition-all duration-200 group"
           >
             {/* Image */}
-            <div className="aspect-square overflow-hidden">
+            <div 
+              className="aspect-square overflow-hidden cursor-pointer"
+              onClick={() => handleImageClick(image)}
+            >
               <img 
                 src={image.imageUrl} 
                 alt={`Generated: ${image.prompt.slice(0, 50)}...`}
@@ -89,9 +103,22 @@ export const ImageHistoryGrid: React.FC<ImageHistoryGridProps> = ({
 
       <div className="text-center">
         <p className="text-xs text-neutral-500">
-          {images.length} image{images.length !== 1 ? 's' : ''} generated • Click on any image to download
+          {images.length} image{images.length !== 1 ? 's' : ''} generated • Click on any image to view full size
         </p>
       </div>
+
+      {/* Lightbox */}
+      {selectedImage && (
+        <Lightbox
+          isOpen={true}
+          onClose={handleCloseLightbox}
+          imageUrl={selectedImage.imageUrl}
+          imageAlt={`Generated: ${selectedImage.prompt}`}
+          title={selectedImage.prompt}
+          onDownload={() => handleDownload(selectedImage)}
+          downloadFilename={`ai-edited-${new Date(selectedImage.timestamp).toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`}
+        />
+      )}
     </div>
   );
 };
