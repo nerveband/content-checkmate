@@ -1,0 +1,6 @@
+{
+  "name": "Intuitive Solutions Content Policy Analyzer",
+  "description": "An application to analyze images, video frames, and text against Meta's content policies using Gemini AI, providing feedback and recommendations with a black and gold theme.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
