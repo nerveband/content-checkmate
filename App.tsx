@@ -5,17 +5,23 @@ import { AnalysisDisplay } from './components/AnalysisDisplay';
 import { analyzeContent } from './services/geminiService';
 import { POLICY_GUIDE, PREDEFINED_EXCLUSION_TAGS } from './constants';
 import PolicyGuide from './components/PolicyGuide';
-import type { AnalysisResult, FileType, AnalysisTableItem, ExcludedItem } from './types';
+import type { AnalysisResult, FileType, AnalysisTableItem, ExcludedItem, ActiveTab, FluxModelName, GeneratedImage } from './types';
 import { 
   LoadingSpinner, ErrorIcon, FilmIcon, PencilSquareIcon, MegaphoneIcon, PhotoIcon, 
-  ChatBubbleBottomCenterTextIcon, ClipboardDocumentListIcon, XCircleIcon, CogIcon, Trash2Icon, AdjustmentsHorizontalIcon
+  ChatBubbleBottomCenterTextIcon, ClipboardDocumentListIcon, XCircleIcon, CogIcon, Trash2Icon, AdjustmentsHorizontalIcon, SparklesIcon
 } from './components/icons';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { GoogleGenAI } from '@google/genai';
 import { ExclusionRulesInputs } from './components/ExclusionRulesInputs';
+import { ImageEditorForm } from './components/ImageEditorForm';
+import { GeneratedImageDisplay } from './components/GeneratedImageDisplay';
+import { ImageHistoryGrid } from './components/ImageHistoryGrid';
+import { generateImage } from './services/fluxService';
+import { generateFixPrompt, generateComprehensiveFixPrompt } from './services/promptEngineering';
+import { FixGenerationModal } from './components/FixGenerationModal';
+import type { GeneratedFixImage } from './types';
 
 
-type ActiveTab = 'mediaAndText' | 'textOnly' | 'policyGuide';
 
 type ModelName =
   | 'gemini-2.5-pro-preview-05-06'
@@ -196,6 +202,28 @@ const App: React.FC = () => {
   const [selectedExclusionTags, setSelectedExclusionTags] = useState<Set<string>>(new Set());
   const [customExclusions, setCustomExclusions] = useState<string>('');
   const [exclusionsChangedSinceLastAnalysis, setExclusionsChangedSinceLastAnalysis] = useState<boolean>(false);
+
+  // Image Editor state
+  const [uploadedEditorImageFile, setUploadedEditorImageFile] = useState<File | null>(null);
+  const [uploadedEditorImagePreview, setUploadedEditorImagePreview] = useState<string | null>(null);
+  const [editingPrompt, setEditingPrompt] = useState<string>('');
+  const [selectedFluxModel, setSelectedFluxModel] = useState<FluxModelName>('flux-kontext-pro');
+  const [generatedImagesHistory, setGeneratedImagesHistory] = useState<GeneratedImage[]>([]);
+  const [isLoadingImageGeneration, setIsLoadingImageGeneration] = useState<boolean>(false);
+  const [imageGenerationError, setImageGenerationError] = useState<string | null>(null);
+  const [currentGeneratedImage, setCurrentGeneratedImage] = useState<string | null>(null);
+  const [currentGeneratedPrompt, setCurrentGeneratedPrompt] = useState<string>('');
+
+  // Content Remediation state
+  const [isFixGenerationModalOpen, setIsFixGenerationModalOpen] = useState<boolean>(false);
+  const [currentOriginalImageForFix, setCurrentOriginalImageForFix] = useState<string | null>(null);
+  const [currentFixPrompt, setCurrentFixPrompt] = useState<string>('');
+  const [generatedFixImagesHistory, setGeneratedFixImagesHistory] = useState<GeneratedFixImage[]>([]);
+  const [isLoadingFixGeneration, setIsLoadingFixGeneration] = useState<boolean>(false);
+  const [fixGenerationError, setFixGenerationError] = useState<string | null>(null);
+  const [currentFixedImage, setCurrentFixedImage] = useState<string | null>(null);
+  const [currentTargetIssue, setCurrentTargetIssue] = useState<AnalysisTableItem | null>(null);
+  const [isAllIssuesFix, setIsAllIssuesFix] = useState<boolean>(false);
 
 
   const currentSelectedModelDetails = AVAILABLE_MODELS.find(m => m.id === selectedModel) || AVAILABLE_MODELS[0];
@@ -647,6 +675,180 @@ const App: React.FC = () => {
     if (analysisResult) setExclusionsChangedSinceLastAnalysis(true);
   };
 
+  // Image Editor handlers
+  const handleEditorFileSelect = useCallback(async (file: File) => {
+    setUploadedEditorImageFile(file);
+    setImageGenerationError(null);
+    setCurrentGeneratedImage(null);
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setUploadedEditorImagePreview(result);
+    };
+    reader.onerror = () => {
+      setImageGenerationError('Error reading image file.');
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleGenerateEditorImage = useCallback(async () => {
+    if (!uploadedEditorImagePreview || !editingPrompt.trim()) {
+      setImageGenerationError('Please upload an image and provide editing instructions.');
+      return;
+    }
+
+    setIsLoadingImageGeneration(true);
+    setImageGenerationError(null);
+
+    try {
+      const result = await generateImage(
+        selectedFluxModel,
+        uploadedEditorImagePreview,
+        editingPrompt.trim()
+      );
+
+      const newImage: GeneratedImage = {
+        id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        prompt: editingPrompt.trim(),
+        imageUrl: result.imageUrl,
+        originalImageId: result.originalImageId,
+        timestamp: Date.now(),
+        modelUsed: selectedFluxModel
+      };
+
+      setGeneratedImagesHistory(prev => [newImage, ...prev]);
+      setCurrentGeneratedImage(result.imageUrl);
+      setCurrentGeneratedPrompt(editingPrompt.trim());
+    } catch (error: any) {
+      console.error('Image generation error:', error);
+      setImageGenerationError(error.message || 'Failed to generate image. Please try again.');
+    } finally {
+      setIsLoadingImageGeneration(false);
+    }
+  }, [uploadedEditorImagePreview, editingPrompt, selectedFluxModel]);
+
+  const handleGenerateAnotherEditorImage = useCallback(() => {
+    handleGenerateEditorImage();
+  }, [handleGenerateEditorImage]);
+
+  const handleClearEditorHistory = useCallback(() => {
+    setGeneratedImagesHistory([]);
+  }, []);
+
+  // Content Remediation handlers
+  const handleSuggestFix = useCallback(async (issue: AnalysisTableItem) => {
+    if (!genAIClient || !filePreview) {
+      setFixGenerationError('AI client not available or no image to fix.');
+      return;
+    }
+
+    setIsLoadingFixGeneration(true);
+    setFixGenerationError(null);
+    setCurrentTargetIssue(issue);
+    setIsAllIssuesFix(false);
+    setCurrentOriginalImageForFix(filePreview);
+    setIsFixGenerationModalOpen(true);
+
+    try {
+      // Generate fix prompt using Gemini
+      const fixPrompt = await generateFixPrompt(genAIClient, issue);
+      setCurrentFixPrompt(fixPrompt);
+
+      // Generate fixed image using FLUX
+      const result = await generateImage(
+        selectedFluxModel,
+        filePreview,
+        fixPrompt
+      );
+
+      const newFixImage: GeneratedFixImage = {
+        id: `fix-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        generatedPrompt: fixPrompt,
+        imageUrl: result.imageUrl,
+        originalAnalysisIssueId: issue.id,
+        timestamp: Date.now(),
+        modelUsed: selectedFluxModel
+      };
+
+      setGeneratedFixImagesHistory(prev => [newFixImage, ...prev]);
+      setCurrentFixedImage(result.imageUrl);
+    } catch (error: any) {
+      console.error('Fix generation error:', error);
+      setFixGenerationError(error.message || 'Failed to generate fix. Please try again.');
+    } finally {
+      setIsLoadingFixGeneration(false);
+    }
+  }, [genAIClient, filePreview, selectedFluxModel]);
+
+  const handleSuggestAllFixes = useCallback(async (issues: AnalysisTableItem[]) => {
+    if (!genAIClient || !filePreview || issues.length === 0) {
+      setFixGenerationError('AI client not available, no image to fix, or no issues provided.');
+      return;
+    }
+
+    setIsLoadingFixGeneration(true);
+    setFixGenerationError(null);
+    setCurrentTargetIssue(null);
+    setIsAllIssuesFix(true);
+    setCurrentOriginalImageForFix(filePreview);
+    setIsFixGenerationModalOpen(true);
+
+    try {
+      // Generate comprehensive fix prompt using Gemini
+      const fixPrompt = await generateComprehensiveFixPrompt(genAIClient, issues);
+      setCurrentFixPrompt(fixPrompt);
+
+      // Generate fixed image using FLUX
+      const result = await generateImage(
+        selectedFluxModel,
+        filePreview,
+        fixPrompt
+      );
+
+      const newFixImage: GeneratedFixImage = {
+        id: `fix-all-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        generatedPrompt: fixPrompt,
+        imageUrl: result.imageUrl,
+        originalAnalysisIssueId: 'all-issues',
+        timestamp: Date.now(),
+        modelUsed: selectedFluxModel
+      };
+
+      setGeneratedFixImagesHistory(prev => [newFixImage, ...prev]);
+      setCurrentFixedImage(result.imageUrl);
+    } catch (error: any) {
+      console.error('Comprehensive fix generation error:', error);
+      setFixGenerationError(error.message || 'Failed to generate comprehensive fix. Please try again.');
+    } finally {
+      setIsLoadingFixGeneration(false);
+    }
+  }, [genAIClient, filePreview, selectedFluxModel]);
+
+  const handleGenerateAnotherFix = useCallback(() => {
+    if (isAllIssuesFix && analysisResult) {
+      const visualIssues = analysisResult.issuesTable.filter(issue => 
+        issue.sourceContext === 'primaryImage' || issue.sourceContext === 'videoFrame'
+      );
+      handleSuggestAllFixes(visualIssues);
+    } else if (currentTargetIssue) {
+      handleSuggestFix(currentTargetIssue);
+    }
+  }, [isAllIssuesFix, analysisResult, currentTargetIssue, handleSuggestAllFixes, handleSuggestFix]);
+
+  const handleClearFixHistory = useCallback(() => {
+    setGeneratedFixImagesHistory([]);
+  }, []);
+
+  const handleCloseFixModal = useCallback(() => {
+    setIsFixGenerationModalOpen(false);
+    setCurrentFixedImage(null);
+    setCurrentFixPrompt('');
+    setCurrentTargetIssue(null);
+    setIsAllIssuesFix(false);
+    setFixGenerationError(null);
+  }, []);
+
 
   const TabButton: React.FC<{
     tabId: ActiveTab;
@@ -687,6 +889,7 @@ const App: React.FC = () => {
       case 'mediaAndText': return "Upload media, add optional text, define exclusions, and get instant policy feedback.";
       case 'textOnly': return "Enter your text content, define exclusions, and get a quick policy check.";
       case 'policyGuide': return "Interactively explore content policy guidelines and restricted keywords.";
+      case 'imageEditor': return "Upload an image and let AI transform it based on your creative instructions.";
       default: return "";
     }
   };
@@ -853,6 +1056,7 @@ const App: React.FC = () => {
             <TabButton tabId="mediaAndText" currentTab={activeTab} onClick={setActiveTab} icon={<PhotoIcon />}>Media & Text</TabButton>
             <TabButton tabId="textOnly" currentTab={activeTab} onClick={setActiveTab} icon={<ChatBubbleBottomCenterTextIcon />}>Text Only</TabButton>
             <TabButton tabId="policyGuide" currentTab={activeTab} onClick={setActiveTab} icon={<ClipboardDocumentListIcon />}>Policy Guide</TabButton>
+            <TabButton tabId="imageEditor" currentTab={activeTab} onClick={setActiveTab} icon={<SparklesIcon />}>Image Editor</TabButton>
           </div>
           <button
             onClick={() => setIsSettingsOpen(true)}
@@ -1105,6 +1309,59 @@ const App: React.FC = () => {
             </div>
            )}
 
+           {activeTab === 'imageEditor' && (
+            <div role="tabpanel" id="imageEditor-panel" aria-labelledby="imageEditor-tab">
+              <ImageEditorForm
+                uploadedImageFile={uploadedEditorImageFile}
+                uploadedImagePreview={uploadedEditorImagePreview}
+                editingPrompt={editingPrompt}
+                selectedFluxModel={selectedFluxModel}
+                isLoadingGeneration={isLoadingImageGeneration}
+                onFileSelect={handleEditorFileSelect}
+                onPromptChange={setEditingPrompt}
+                onModelChange={setSelectedFluxModel}
+                onGenerate={handleGenerateEditorImage}
+                disabled={isLoadingImageGeneration}
+              />
+
+              {imageGenerationError && !isLoadingImageGeneration && (
+                <div className="mt-6 p-4 bg-red-800/60 text-red-200 border border-red-600 rounded-md flex items-start">
+                  <ErrorIcon className="h-6 w-6 mr-3 flex-shrink-0 text-red-300" />
+                  <div>
+                    <h4 className="font-bold text-red-200">Generation Error</h4>
+                    <MarkdownRenderer text={imageGenerationError} className="text-sm text-red-200" />
+                  </div>
+                </div>
+              )}
+
+              {isLoadingImageGeneration && (
+                <div className="mt-8 flex flex-col items-center justify-center text-center">
+                  <LoadingSpinner className="h-12 w-12 text-purple-400 animate-spin" />
+                  <p className="mt-4 text-lg text-neutral-300">
+                    Generating your edited image... This may take a moment.
+                  </p>
+                  <p className="text-sm text-neutral-400 mt-1">Using {selectedFluxModel.replace('flux-kontext-', 'FLUX.1 Kontext ')} model</p>
+                </div>
+              )}
+
+              {currentGeneratedImage && !isLoadingImageGeneration && (
+                <GeneratedImageDisplay
+                  imageUrl={currentGeneratedImage}
+                  prompt={currentGeneratedPrompt}
+                  originalImageUrl={uploadedEditorImagePreview}
+                  onGenerateAnother={handleGenerateAnotherEditorImage}
+                />
+              )}
+
+              {generatedImagesHistory.length > 0 && (
+                <ImageHistoryGrid
+                  images={generatedImagesHistory}
+                  onClearHistory={handleClearEditorHistory}
+                />
+              )}
+            </div>
+           )}
+
 
           {analysisError && !isLoadingAnalysis && !(currentApiKeyStatus === 'none' && analysisError.includes("API Key is not configured")) && (
             <div className="mt-6 p-4 bg-red-800/60 text-red-200 border border-red-600 rounded-md flex items-start">
@@ -1182,10 +1439,30 @@ const App: React.FC = () => {
               drawableIssuesMap={drawableIssuesMap}
               drawableExcludedMap={drawableExcludedMap}
               isImageTabActive={activeTab === 'mediaAndText' && fileType === 'image'}
+              onSuggestFix={handleSuggestFix}
+              onSuggestAllFixes={handleSuggestAllFixes}
+              canGenerateFixes={activeTab === 'mediaAndText' && fileType === 'image' && !!genAIClient}
             />
           )}
         </div>
       </main>
+
+      {/* Fix Generation Modal */}
+      <FixGenerationModal
+        isOpen={isFixGenerationModalOpen}
+        onClose={handleCloseFixModal}
+        originalImageUrl={currentOriginalImageForFix}
+        currentFixedImage={currentFixedImage}
+        currentFixPrompt={currentFixPrompt}
+        isLoadingGeneration={isLoadingFixGeneration}
+        generationError={fixGenerationError}
+        fixImagesHistory={generatedFixImagesHistory}
+        targetIssue={currentTargetIssue}
+        isAllIssuesFix={isAllIssuesFix}
+        onGenerateAnother={handleGenerateAnotherFix}
+        onClearHistory={handleClearFixHistory}
+      />
+
       <footer className="w-full max-w-5xl mt-12 text-center text-neutral-500 text-sm">
         <p>&copy; {new Date().getFullYear()} Intuitive Solutions Content Policy Analyzer.</p>
          <p className="text-xs mt-1">Note: For videos, analysis is based on the full video content and any accompanying text.</p>

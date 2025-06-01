@@ -44,3 +44,26 @@ export interface PredefinedExclusionTag {
   id: string;
   label: string;
 }
+
+// FLUX Image Generation Types
+export interface GeneratedImage {
+  id: string;
+  prompt: string;
+  imageUrl: string;
+  originalImageId?: string;
+  timestamp: number;
+  modelUsed: FluxModelName;
+}
+
+export interface GeneratedFixImage {
+  id: string;
+  generatedPrompt: string;
+  imageUrl: string;
+  originalAnalysisIssueId?: string;
+  timestamp: number;
+  modelUsed: FluxModelName;
+}
+
+export type FluxModelName = 'flux-kontext-pro' | 'flux-kontext-max';
+
+export type ActiveTab = 'mediaAndText' | 'textOnly' | 'policyGuide' | 'imageEditor';

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import type { AnalysisResult, AnalysisTableItem, ExcludedItem } from '../types';
-import { CheckCircleIcon, InformationCircleIcon, ExclamationTriangleIcon, EyeIcon } from './icons';
+import { CheckCircleIcon, InformationCircleIcon, ExclamationTriangleIcon, EyeIcon, SparklesIcon } from './icons';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 type SeverityLevel = 'High Risk' | 'Medium Risk' | 'Low Risk' | 'Compliant' | 'High' | 'Medium' | 'Low' | string | undefined;
@@ -121,7 +121,10 @@ interface AnalysisDisplayProps {
   onHighlightIssue: (id: string | null) => void;
   drawableIssuesMap: Map<string, number>; 
   drawableExcludedMap: Map<string, number>;
-  isImageTabActive: boolean; 
+  isImageTabActive: boolean;
+  onSuggestFix?: (issue: AnalysisTableItem) => void;
+  onSuggestAllFixes?: (issues: AnalysisTableItem[]) => void;
+  canGenerateFixes?: boolean;
 }
 
 export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ 
@@ -130,7 +133,10 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
     onHighlightIssue, 
     drawableIssuesMap, 
     drawableExcludedMap,
-    isImageTabActive 
+    isImageTabActive,
+    onSuggestFix,
+    onSuggestAllFixes,
+    canGenerateFixes = false
 }) => {
   const hasIssues = result.issuesTable && result.issuesTable.length > 0;
   const hasExcludedItems = result.excludedItemsTable && result.excludedItemsTable.length > 0;
@@ -177,6 +183,19 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
 
       {hasIssues ? (
         <SectionCard title="Identified Issues & Suggestions" severity={issuesSectionSeverity}>
+          {/* Suggest Fix for All Button */}
+          {canGenerateFixes && onSuggestAllFixes && isImageTabActive && (
+            <div className="mb-6 flex justify-center">
+              <button
+                onClick={() => onSuggestAllFixes(result.issuesTable.filter(issue => issue.sourceContext === 'primaryImage' || issue.sourceContext === 'videoFrame'))}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-700 hover:via-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg shadow-md hover:shadow-purple-500/30 transition-all duration-300 ease-in-out flex items-center justify-center"
+                aria-label="Generate AI fixes for all visual issues"
+              >
+                <SparklesIcon className="h-5 w-5 mr-2" />
+                Suggest AI Fix for All Issues
+              </button>
+            </div>
+          )}
           {/* Desktop Table View */}
           <div className="overflow-x-auto hidden md:block">
             <table className="w-full min-w-[700px] text-sm text-left text-neutral-300">
@@ -186,7 +205,10 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                   <th scope="col" className="px-4 py-3 w-[10%]">Severity</th>
                   <th scope="col" className="px-6 py-3 w-[25%]">Identified Content</th>
                   <th scope="col" className="px-6 py-3 w-[35%]">Issue Description</th>
-                  <th scope="col" className="px-6 py-3 rounded-tr-lg w-[25%]">Recommendation</th>
+                  <th scope="col" className="px-6 py-3 w-[25%]">Recommendation</th>
+                  {canGenerateFixes && onSuggestFix && isImageTabActive && (
+                    <th scope="col" className="px-4 py-3 rounded-tr-lg w-[10%] text-center">AI Fix</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -230,6 +252,25 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                       </td>
                       <td className="px-6 py-4 whitespace-pre-wrap"><MarkdownRenderer text={item.issueDescription} /></td>
                       <td className="px-6 py-4 whitespace-pre-wrap"><MarkdownRenderer text={item.recommendation} /></td>
+                      {canGenerateFixes && onSuggestFix && isImageTabActive && (
+                        <td className="px-4 py-4 text-center">
+                          {(item.sourceContext === 'primaryImage' || item.sourceContext === 'videoFrame') ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSuggestFix(item);
+                              }}
+                              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-md transition-colors duration-200 flex items-center justify-center mx-auto"
+                              aria-label={`Suggest AI fix for: ${item.identifiedContent.slice(0, 50)}`}
+                            >
+                              <SparklesIcon className="h-3.5 w-3.5 mr-1" />
+                              Fix
+                            </button>
+                          ) : (
+                            <span className="text-xs text-neutral-500">N/A</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -286,6 +327,21 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                     <strong className="block text-sm font-semibold text-yellow-300">Recommendation:</strong>
                     <MarkdownRenderer text={item.recommendation} className="text-neutral-300 whitespace-pre-wrap text-sm" />
                   </div>
+                  {canGenerateFixes && onSuggestFix && isImageTabActive && (item.sourceContext === 'primaryImage' || item.sourceContext === 'videoFrame') && (
+                    <div className="mt-4 pt-3 border-t border-neutral-700">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSuggestFix(item);
+                        }}
+                        className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-md transition-colors duration-200 flex items-center justify-center"
+                        aria-label={`Suggest AI fix for: ${item.identifiedContent.slice(0, 50)}`}
+                      >
+                        <SparklesIcon className="h-4 w-4 mr-2" />
+                        Suggest AI Fix
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
