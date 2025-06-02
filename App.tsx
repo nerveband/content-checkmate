@@ -183,7 +183,7 @@ const App: React.FC = () => {
   const [mediaUserDescription, setMediaUserDescription] = useState<string>('');
   const [mediaUserCta, setMediaUserCta] = useState<string>('');
   const [postIntent, setPostIntent] = useState<string>('');
-  const [isPostIntentExpanded, setIsPostIntentExpanded] = useState<boolean>(false);
+  const [isOptionalSettingsExpanded, setIsOptionalSettingsExpanded] = useState<boolean>(false);
 
   const [textOnlyDescription, setTextOnlyDescription] = useState<string>('');
   const [textOnlyCta, setTextOnlyCta] = useState<string>('');
@@ -1292,92 +1292,107 @@ const App: React.FC = () => {
             <div role="tabpanel" id="mediaAndText-panel" aria-labelledby="mediaAndText-tab">
               <FileUpload onFileSelect={handleFileSelect} disabled={formInputsDisabled} />
               
-              <div className="mt-6 w-full space-y-4 text-left">
-                  <div>
-                      <label htmlFor="mediaUserDescription" className="block text-sm font-medium text-neutral-300 mb-1">
-                      <PencilSquareIcon className="w-4 h-4 inline mr-1 align-text-bottom text-yellow-400"/>
-                      Accompanying Description (Optional)
+              {/* Optional Settings Section */}
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsOptionalSettingsExpanded(!isOptionalSettingsExpanded)}
+                  className="flex items-center justify-between w-full p-4 text-left bg-neutral-800 border border-neutral-700 rounded-lg hover:bg-neutral-700/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
+                  aria-expanded={isOptionalSettingsExpanded}
+                  aria-controls="optional-settings-content"
+                >
+                  <span className="flex items-center text-base font-medium text-neutral-200">
+                    <AdjustmentsHorizontalIcon className="w-5 h-5 mr-3 text-yellow-400"/>
+                    Optional Settings
+                    <span className="ml-2 text-sm text-neutral-400">(Description, CTA, Intent & Exclusions)</span>
+                  </span>
+                  <span className={`transform transition-transform duration-200 ${isOptionalSettingsExpanded ? 'rotate-180' : ''}`}>
+                    <svg className="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </button>
+                
+                {isOptionalSettingsExpanded && (
+                  <div id="optional-settings-content" className="mt-4 p-6 bg-neutral-800/50 border border-neutral-700 rounded-lg space-y-6">
+                    {/* Description */}
+                    <div>
+                      <label htmlFor="mediaUserDescription" className="block text-sm font-medium text-neutral-300 mb-2">
+                        <PencilSquareIcon className="w-4 h-4 inline mr-2 align-text-bottom text-yellow-400"/>
+                        Accompanying Description
                       </label>
                       <InputFieldWrapper value={mediaUserDescription} onClear={clearMediaUserDescription} disabled={formInputsDisabled} fieldId="media description">
                         <textarea
-                        id="mediaUserDescription"
-                        rows={3}
-                        className="w-full p-2 pr-16 bg-neutral-800 border border-neutral-700 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-500 text-sm disabled:opacity-70 disabled:bg-neutral-700/50"
-                        placeholder="Enter any text description that accompanies your media..."
-                        value={mediaUserDescription}
-                        onChange={(e) => setMediaUserDescription(e.target.value)}
-                        disabled={formInputsDisabled}
-                        aria-label="Accompanying Description for Media"
+                          id="mediaUserDescription"
+                          rows={3}
+                          className="w-full p-3 pr-16 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-400 text-sm disabled:opacity-70 disabled:bg-neutral-600/50"
+                          placeholder="Enter any text description that accompanies your media..."
+                          value={mediaUserDescription}
+                          onChange={(e) => setMediaUserDescription(e.target.value)}
+                          disabled={formInputsDisabled}
+                          aria-label="Accompanying Description for Media"
                         />
                       </InputFieldWrapper>
-                  </div>
-                  <div>
-                      <label htmlFor="mediaUserCta" className="block text-sm font-medium text-neutral-300 mb-1">
-                      <MegaphoneIcon className="w-4 h-4 inline mr-1 align-text-bottom text-yellow-400"/>
-                      Call to Action (CTA) (Optional)
-                      </label>
-                       <InputFieldWrapper value={mediaUserCta} onClear={clearMediaUserCta} disabled={formInputsDisabled} fieldId="media CTA">
-                        <input
-                        type="text"
-                        id="mediaUserCta"
-                        className="w-full p-2 pr-16 bg-neutral-800 border border-neutral-700 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-500 text-sm disabled:opacity-70 disabled:bg-neutral-700/50"
-                        placeholder="Enter any Call to Action text for your media..."
-                        value={mediaUserCta}
-                        onChange={(e) => setMediaUserCta(e.target.value)}
-                        disabled={formInputsDisabled}
-                        aria-label="Call to Action for Media"
-                        />
-                      </InputFieldWrapper>
-                  </div>
-                  <div>
-                      <button
-                        type="button"
-                        onClick={() => setIsPostIntentExpanded(!isPostIntentExpanded)}
-                        className="flex items-center justify-between w-full p-3 text-left bg-neutral-700/50 border border-neutral-600 rounded-md hover:bg-neutral-700/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
-                        aria-expanded={isPostIntentExpanded}
-                        aria-controls="post-intent-content"
-                      >
-                        <span className="flex items-center text-sm font-medium text-neutral-300">
-                          <SparklesIcon className="w-4 h-4 mr-2 text-yellow-400"/>
-                          Post Intent/Goal (Optional)
-                        </span>
-                        <span className={`transform transition-transform duration-200 ${isPostIntentExpanded ? 'rotate-180' : ''}`}>
-                          <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </span>
-                      </button>
-                      {isPostIntentExpanded && (
-                        <div id="post-intent-content" className="mt-2 p-3 bg-neutral-800/50 border border-neutral-600 rounded-md">
-                          <p className="text-xs text-neutral-400 mb-3">
-                            Describe the intended purpose or goal of this post to help generate more targeted policy recommendations.
-                          </p>
-                          <InputFieldWrapper value={postIntent} onClear={clearPostIntent} disabled={formInputsDisabled} fieldId="post intent">
-                            <textarea
-                              id="postIntent"
-                              rows={2}
-                              className="w-full p-2 pr-16 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-500 text-sm disabled:opacity-70 disabled:bg-neutral-600/50"
-                              placeholder="e.g., 'Promote our new product launch to increase sales' or 'Build brand awareness for our eco-friendly initiative'"
-                              value={postIntent}
-                              onChange={(e) => setPostIntent(e.target.value)}
-                              disabled={formInputsDisabled}
-                              aria-label="Post Intent or Goal"
-                            />
-                          </InputFieldWrapper>
-                        </div>
-                      )}
-                  </div>
-              </div>
+                    </div>
 
-              <ExclusionRulesInputs
-                selectedExclusionTags={selectedExclusionTags}
-                customExclusions={customExclusions}
-                onTagChange={handleExclusionTagChange}
-                onCustomChange={handleCustomExclusionsChange}
-                predefinedTags={PREDEFINED_EXCLUSION_TAGS}
-                disabled={formInputsDisabled}
-                idSuffix="media-text"
-              />
+                    {/* CTA */}
+                    <div>
+                      <label htmlFor="mediaUserCta" className="block text-sm font-medium text-neutral-300 mb-2">
+                        <MegaphoneIcon className="w-4 h-4 inline mr-2 align-text-bottom text-yellow-400"/>
+                        Call to Action (CTA)
+                      </label>
+                      <InputFieldWrapper value={mediaUserCta} onClear={clearMediaUserCta} disabled={formInputsDisabled} fieldId="media CTA">
+                        <input
+                          type="text"
+                          id="mediaUserCta"
+                          className="w-full p-3 pr-16 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-400 text-sm disabled:opacity-70 disabled:bg-neutral-600/50"
+                          placeholder="Enter any Call to Action text for your media..."
+                          value={mediaUserCta}
+                          onChange={(e) => setMediaUserCta(e.target.value)}
+                          disabled={formInputsDisabled}
+                          aria-label="Call to Action for Media"
+                        />
+                      </InputFieldWrapper>
+                    </div>
+
+                    {/* Post Intent */}
+                    <div>
+                      <label htmlFor="postIntent" className="block text-sm font-medium text-neutral-300 mb-2">
+                        <SparklesIcon className="w-4 h-4 inline mr-2 align-text-bottom text-yellow-400"/>
+                        Post Intent/Goal
+                      </label>
+                      <p className="text-xs text-neutral-400 mb-2">
+                        Describe the intended purpose or goal of this post to help generate more targeted policy recommendations.
+                      </p>
+                      <InputFieldWrapper value={postIntent} onClear={clearPostIntent} disabled={formInputsDisabled} fieldId="post intent">
+                        <textarea
+                          id="postIntent"
+                          rows={2}
+                          className="w-full p-3 pr-16 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-400 text-sm disabled:opacity-70 disabled:bg-neutral-600/50"
+                          placeholder="e.g., 'Promote our new product launch to increase sales' or 'Build brand awareness for our eco-friendly initiative'"
+                          value={postIntent}
+                          onChange={(e) => setPostIntent(e.target.value)}
+                          disabled={formInputsDisabled}
+                          aria-label="Post Intent or Goal"
+                        />
+                      </InputFieldWrapper>
+                    </div>
+
+                    {/* Exclusion Rules */}
+                    <div className="border-t border-neutral-600 pt-6">
+                      <ExclusionRulesInputs
+                        selectedExclusionTags={selectedExclusionTags}
+                        customExclusions={customExclusions}
+                        onTagChange={handleExclusionTagChange}
+                        onCustomChange={handleCustomExclusionsChange}
+                        predefinedTags={PREDEFINED_EXCLUSION_TAGS}
+                        disabled={formInputsDisabled}
+                        idSuffix="media-text"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {isProcessingPreview && (
                 <div className="mt-6 flex flex-col items-center justify-center text-center">
@@ -1522,95 +1537,113 @@ const App: React.FC = () => {
 
           {activeTab === 'textOnly' && (
             <div role="tabpanel" id="textOnly-panel" aria-labelledby="textOnly-tab">
-                <p className="text-neutral-300 mb-6 text-center text-sm">
-                    Enter a description and/or a Call to Action (CTA) below to analyze them against content policies.
-                    No media will be uploaded or analyzed in this mode.
-                </p>
-                <div className="w-full space-y-4 text-left">
-                    <div>
-                        <label htmlFor="textOnlyDescription" className="block text-sm font-medium text-neutral-300 mb-1">
-                        <PencilSquareIcon className="w-4 h-4 inline mr-1 align-text-bottom text-yellow-400"/>
-                        Description
-                        </label>
-                        <InputFieldWrapper value={textOnlyDescription} onClear={clearTextOnlyDescription} disabled={formInputsDisabled} fieldId="text description">
-                          <textarea
-                          id="textOnlyDescription"
-                          rows={4}
-                          className="w-full p-2 pr-16 bg-neutral-800 border border-neutral-700 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-500 text-sm disabled:opacity-70 disabled:bg-neutral-700/50"
-                          placeholder="Enter the primary text content or description..."
-                          value={textOnlyDescription}
-                          onChange={(e) => setTextOnlyDescription(e.target.value)}
-                          disabled={formInputsDisabled}
-                          aria-label="Description for Text-Only Analysis"
-                          />
-                        </InputFieldWrapper>
-                    </div>
-                    <div>
-                        <label htmlFor="textOnlyCta" className="block text-sm font-medium text-neutral-300 mb-1">
-                        <MegaphoneIcon className="w-4 h-4 inline mr-1 align-text-bottom text-yellow-400"/>
-                        Call to Action (CTA)
-                        </label>
-                        <InputFieldWrapper value={textOnlyCta} onClear={clearTextOnlyCta} disabled={formInputsDisabled} fieldId="text CTA">
-                          <input
-                          type="text"
-                          id="textOnlyCta"
-                          className="w-full p-2 pr-16 bg-neutral-800 border border-neutral-700 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-500 text-sm disabled:opacity-70 disabled:bg-neutral-700/50"
-                          placeholder="Enter any Call to Action text..."
-                          value={textOnlyCta}
-                          onChange={(e) => setTextOnlyCta(e.target.value)}
-                          disabled={formInputsDisabled}
-                          aria-label="Call to Action for Text-Only Analysis"
-                          />
-                        </InputFieldWrapper>
-                    </div>
-                    <div>
-                        <button
-                          type="button"
-                          onClick={() => setIsPostIntentExpanded(!isPostIntentExpanded)}
-                          className="flex items-center justify-between w-full p-3 text-left bg-neutral-700/50 border border-neutral-600 rounded-md hover:bg-neutral-700/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
-                          aria-expanded={isPostIntentExpanded}
-                          aria-controls="post-intent-content-text"
-                        >
-                          <span className="flex items-center text-sm font-medium text-neutral-300">
-                            <SparklesIcon className="w-4 h-4 mr-2 text-yellow-400"/>
-                            Post Intent/Goal (Optional)
-                          </span>
-                          <span className={`transform transition-transform duration-200 ${isPostIntentExpanded ? 'rotate-180' : ''}`}>
-                            <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </span>
-                        </button>
-                        {isPostIntentExpanded && (
-                          <div id="post-intent-content-text" className="mt-2 p-3 bg-neutral-800/50 border border-neutral-600 rounded-md">
-                            <p className="text-xs text-neutral-400 mb-3">
-                              Describe the intended purpose or goal of this post to help generate more targeted policy recommendations.
-                            </p>
-                            <InputFieldWrapper value={postIntent} onClear={clearPostIntent} disabled={formInputsDisabled} fieldId="post intent">
-                              <textarea
-                                id="postIntentTextOnly"
-                                rows={2}
-                                className="w-full p-2 pr-16 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-500 text-sm disabled:opacity-70 disabled:bg-neutral-600/50"
-                                placeholder="e.g., 'Promote our new product launch to increase sales' or 'Build brand awareness for our eco-friendly initiative'"
-                                value={postIntent}
-                                onChange={(e) => setPostIntent(e.target.value)}
-                                disabled={formInputsDisabled}
-                                aria-label="Post Intent or Goal"
-                              />
-                            </InputFieldWrapper>
-                          </div>
-                        )}
-                    </div>
+              <p className="text-neutral-300 mb-6 text-center text-sm">
+                Enter a description and/or a Call to Action (CTA) below to analyze them against content policies.
+                No media will be uploaded or analyzed in this mode.
+              </p>
+              
+              {/* Main Content Fields */}
+              <div className="w-full space-y-4 text-left mb-6">
+                <div>
+                  <label htmlFor="textOnlyDescription" className="block text-sm font-medium text-neutral-300 mb-2">
+                    <PencilSquareIcon className="w-4 h-4 inline mr-2 align-text-bottom text-yellow-400"/>
+                    Description
+                  </label>
+                  <InputFieldWrapper value={textOnlyDescription} onClear={clearTextOnlyDescription} disabled={formInputsDisabled} fieldId="text description">
+                    <textarea
+                      id="textOnlyDescription"
+                      rows={4}
+                      className="w-full p-3 pr-16 bg-neutral-800 border border-neutral-700 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-400 text-sm disabled:opacity-70 disabled:bg-neutral-700/50"
+                      placeholder="Enter the primary text content or description..."
+                      value={textOnlyDescription}
+                      onChange={(e) => setTextOnlyDescription(e.target.value)}
+                      disabled={formInputsDisabled}
+                      aria-label="Description for Text-Only Analysis"
+                    />
+                  </InputFieldWrapper>
                 </div>
-                <ExclusionRulesInputs
-                  selectedExclusionTags={selectedExclusionTags}
-                  customExclusions={customExclusions}
-                  onTagChange={handleExclusionTagChange}
-                  onCustomChange={handleCustomExclusionsChange}
-                  predefinedTags={PREDEFINED_EXCLUSION_TAGS}
-                  disabled={formInputsDisabled}
-                  idSuffix="text-only"
-                />
+                
+                <div>
+                  <label htmlFor="textOnlyCta" className="block text-sm font-medium text-neutral-300 mb-2">
+                    <MegaphoneIcon className="w-4 h-4 inline mr-2 align-text-bottom text-yellow-400"/>
+                    Call to Action (CTA)
+                  </label>
+                  <InputFieldWrapper value={textOnlyCta} onClear={clearTextOnlyCta} disabled={formInputsDisabled} fieldId="text CTA">
+                    <input
+                      type="text"
+                      id="textOnlyCta"
+                      className="w-full p-3 pr-16 bg-neutral-800 border border-neutral-700 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-400 text-sm disabled:opacity-70 disabled:bg-neutral-700/50"
+                      placeholder="Enter any Call to Action text..."
+                      value={textOnlyCta}
+                      onChange={(e) => setTextOnlyCta(e.target.value)}
+                      disabled={formInputsDisabled}
+                      aria-label="Call to Action for Text-Only Analysis"
+                    />
+                  </InputFieldWrapper>
+                </div>
+              </div>
+
+              {/* Optional Settings Section */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsOptionalSettingsExpanded(!isOptionalSettingsExpanded)}
+                  className="flex items-center justify-between w-full p-4 text-left bg-neutral-800 border border-neutral-700 rounded-lg hover:bg-neutral-700/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
+                  aria-expanded={isOptionalSettingsExpanded}
+                  aria-controls="optional-settings-content-text"
+                >
+                  <span className="flex items-center text-base font-medium text-neutral-200">
+                    <AdjustmentsHorizontalIcon className="w-5 h-5 mr-3 text-yellow-400"/>
+                    Optional Settings
+                    <span className="ml-2 text-sm text-neutral-400">(Intent & Exclusions)</span>
+                  </span>
+                  <span className={`transform transition-transform duration-200 ${isOptionalSettingsExpanded ? 'rotate-180' : ''}`}>
+                    <svg className="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </button>
+                
+                {isOptionalSettingsExpanded && (
+                  <div id="optional-settings-content-text" className="mt-4 p-6 bg-neutral-800/50 border border-neutral-700 rounded-lg space-y-6">
+                    {/* Post Intent */}
+                    <div>
+                      <label htmlFor="postIntentTextOnly" className="block text-sm font-medium text-neutral-300 mb-2">
+                        <SparklesIcon className="w-4 h-4 inline mr-2 align-text-bottom text-yellow-400"/>
+                        Post Intent/Goal
+                      </label>
+                      <p className="text-xs text-neutral-400 mb-2">
+                        Describe the intended purpose or goal of this post to help generate more targeted policy recommendations.
+                      </p>
+                      <InputFieldWrapper value={postIntent} onClear={clearPostIntent} disabled={formInputsDisabled} fieldId="post intent">
+                        <textarea
+                          id="postIntentTextOnly"
+                          rows={2}
+                          className="w-full p-3 pr-16 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-400 text-sm disabled:opacity-70 disabled:bg-neutral-600/50"
+                          placeholder="e.g., 'Promote our new product launch to increase sales' or 'Build brand awareness for our eco-friendly initiative'"
+                          value={postIntent}
+                          onChange={(e) => setPostIntent(e.target.value)}
+                          disabled={formInputsDisabled}
+                          aria-label="Post Intent or Goal"
+                        />
+                      </InputFieldWrapper>
+                    </div>
+
+                    {/* Exclusion Rules */}
+                    <div className="border-t border-neutral-600 pt-6">
+                      <ExclusionRulesInputs
+                        selectedExclusionTags={selectedExclusionTags}
+                        customExclusions={customExclusions}
+                        onTagChange={handleExclusionTagChange}
+                        onCustomChange={handleCustomExclusionsChange}
+                        predefinedTags={PREDEFINED_EXCLUSION_TAGS}
+                        disabled={formInputsDisabled}
+                        idSuffix="text-only"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
            {activeTab === 'policyGuide' && (
