@@ -12,7 +12,8 @@ const generatePrompt = (
     hasCta: boolean,
     selectedExclusionTags?: string[],
     customExclusions?: string,
-    postIntent?: string
+    postIntent?: string,
+    isSiepNotApplicable?: boolean
 ): string => {
   let mediaSection = "";
   if (isVideo) {
@@ -49,6 +50,17 @@ const generatePrompt = (
     exclusionRulesSection += `- Custom Exclusions (one per line, treat each line as a separate rule/keyword):\n${customExclusions.trim()}\n`;
   }
 
+  const siepPromptPart = isSiepNotApplicable ? `
+**SIEP (Social Issues, Elections, or Politics) Content Handling:**
+The user has indicated that SIEP (Social Issues, Elections, or Politics) content is not applicable to this analysis.
+This means that even if you identify content related to social issues, elections, or politics, you should:
+1. Acknowledge and identify any SIEP content you find
+2. Categorize SIEP content separately in the "excludedItemsTable" with matchedRule: "SIEP - Not Applicable"
+3. Focus your main policy analysis on non-SIEP violations
+4. In your overallAssessment, mention if SIEP content was found but ignored per user settings
+The goal is to identify other potential policy violations that would block the content, ignoring SIEP restrictions.
+` : '';
+
   const exclusionPromptPart = exclusionRulesSection.length > 0 ? `
 **Exclusion Rules for Separate Categorization:**
 If any content matches the following rules, categorize it separately in an "excludedItemsTable".
@@ -61,7 +73,7 @@ For each item matching an exclusion rule, include it in "excludedItemsTable" wit
 - "id": "string (e.g. excluded-item-1)"
 - "sourceContext": "string ('primaryImage' | 'videoFrame' | 'descriptionText' | 'ctaText')"
 - "identifiedContent": "string (same format as issuesTable)"
-- "matchedRule": "string (e.g., 'Predefined: Religious Holidays' or 'Custom: [the matched custom line/phrase]')"
+- "matchedRule": "string (e.g., 'Predefined: Religious Holidays' or 'Custom: [the matched custom line/phrase]' or 'SIEP - Not Applicable')"
 - "aiNote": "string (Briefly explain why this content matches the exclusion.)"
 - "boundingBox": { "x_min": number, "y_min": number, "x_max": number, "y_max": number } | null (as per issuesTable rules)
 
@@ -84,6 +96,8 @@ ${providedMaterials}
 ---
 ${policyGuide}
 ---
+
+${siepPromptPart}
 
 ${exclusionPromptPart}
 
@@ -160,12 +174,18 @@ Example structure:
     - **Exclusion-smart**: Consider the active exclusion rules when making suggestions
     - **Multi-faceted**: Cover textual, graphical, imagery, placement, and sizing aspects where relevant
     - **Easy to implement**: Clear, step-by-step instructions that can be directly applied
+    - **Replacement-focused**: For language issues, provide exact word-for-word replacements. For imagery issues, provide specific alternative image suggestions or modifications.
     
-    Format as bullet points or numbered steps. Examples:
-    • "Replace '**guaranteed results**' with 'potential benefits' to avoid making unrealistic claims"
-    • "Move the product image to the right side and reduce size by 30% to make text more prominent"
-    • "Change the red warning text to neutral blue and use smaller font"
-    • "Add a disclaimer below the CTA: 'Results may vary based on individual circumstances'"
+    Format as bullet points or numbered steps. Examples for language:
+    • "Replace '**guaranteed results**' with 'potential benefits' or 'possible outcomes'"
+    • "Change '**100% effective**' to '**highly effective**' or '**clinically proven**'"
+    • "Substitute '**instant weight loss**' with '**gradual weight management**' or '**healthy weight support**'"
+    
+    Examples for imagery:
+    • "Replace the before/after comparison image with a single 'after' image showing satisfied customers"
+    • "Modify the product shot to show the item in use rather than isolated on white background"
+    • "Change the red warning text to neutral blue and reduce font size by 20%"
+    • "Add a small disclaimer text below the main headline: 'Individual results may vary'"
     
     If no issues were found or all issues were excluded, provide suggestions for optimization that maintain compliance.
 
@@ -227,7 +247,8 @@ export const analyzeContent = async (
   isVideo: boolean = false,
   selectedExclusionTags?: string[],
   customExclusions?: string,
-  postIntent?: string
+  postIntent?: string,
+  isSiepNotApplicable?: boolean
 ): Promise<AnalysisResult> => {
   if (!client) {
     throw new Error("Gemini API client is not initialized. API Key might be missing or invalid.");
@@ -250,7 +271,8 @@ export const analyzeContent = async (
     !!userCta,
     selectedExclusionTags,
     customExclusions,
-    postIntent
+    postIntent,
+    isSiepNotApplicable
   );
   
   const parts: Part[] = [{ text: promptContent }];

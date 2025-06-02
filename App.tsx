@@ -208,6 +208,9 @@ const App: React.FC = () => {
   const [selectedExclusionTags, setSelectedExclusionTags] = useState<Set<string>>(new Set());
   const [customExclusions, setCustomExclusions] = useState<string>('');
   const [exclusionsChangedSinceLastAnalysis, setExclusionsChangedSinceLastAnalysis] = useState<boolean>(false);
+  
+  // SIEP (Social Issues, Elections, or Politics) not applicable checkbox
+  const [isSiepNotApplicable, setIsSiepNotApplicable] = useState<boolean>(false);
 
   // Image Editor state
   const [uploadedEditorImageFile, setUploadedEditorImageFile] = useState<File | null>(null);
@@ -619,7 +622,8 @@ const App: React.FC = () => {
         isVideoAnalysis,
         currentExclusionTags.length > 0 ? currentExclusionTags : undefined,
         currentCustomExclusions.length > 0 ? currentCustomExclusions : undefined,
-        postIntent.trim() ? postIntent : undefined
+        postIntent.trim() ? postIntent : undefined,
+        isSiepNotApplicable
       );
       
       if (result && activeTab === 'mediaAndText' && fileType === 'image' && filePreview) {
@@ -1722,7 +1726,23 @@ const App: React.FC = () => {
           )}
           
           {(activeTab === 'mediaAndText' || activeTab === 'textOnly') && (
-            <div className="mt-8 text-center">
+            <div className="mt-8 text-center space-y-4">
+              {/* SIEP Checkbox */}
+              <div className="flex items-center justify-center">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isSiepNotApplicable}
+                    onChange={(e) => setIsSiepNotApplicable(e.target.checked)}
+                    className="w-4 h-4 text-yellow-600 bg-neutral-700 border-neutral-600 rounded focus:ring-yellow-500 focus:ring-2"
+                    disabled={formInputsDisabled}
+                  />
+                  <span className="text-sm text-neutral-300">
+                    <strong>SIEP</strong> (Social Issues, Elections, or Politics) content not applicable - ignore SIEP violations for this analysis
+                  </span>
+                </label>
+              </div>
+              
               <button
                 onClick={handleAnalyze}
                 disabled={!currentCanAnalyze}

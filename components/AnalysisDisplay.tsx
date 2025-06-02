@@ -269,6 +269,16 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
 
   return (
     <div className="mt-8 space-y-8">
+      {/* Summary Section - First */}
+      {result.summaryForCopy && (
+        <CopyableSummary summary={result.summaryForCopy} />
+      )}
+
+      {/* Suggested Fixes Section - Second */}
+      {result.suggestedFixes && (
+        <CopyableSuggestions suggestions={result.suggestedFixes} />
+      )}
+
       <SectionCard 
         title="Overall Assessment" 
         severity={result.overallSeverity || (hasIssues ? 'Medium Risk' : 'Compliant')}
@@ -641,16 +651,6 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
             })}
           </div>
         </SectionCard>
-      )}
-
-      {/* Suggested Fixes Section */}
-      {result.suggestedFixes && (
-        <CopyableSuggestions suggestions={result.suggestedFixes} />
-      )}
-
-      {/* Copyable Summary Section */}
-      {result.summaryForCopy && (
-        <CopyableSummary summary={result.summaryForCopy} />
       )}
 
     </div>
