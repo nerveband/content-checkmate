@@ -24,6 +24,7 @@ const PolicyGuide: React.FC = () => {
     // All sections collapsed by default
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
   
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -134,11 +135,15 @@ const PolicyGuide: React.FC = () => {
   ];
 
 
-  const filteredWords = bannedWords.filter(item => 
-    item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.recommendation && item.recommendation.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredWords = bannedWords.filter(item => {
+    const matchesSearch = item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.recommendation && item.recommendation.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesSeverity = selectedSeverity === null || item.severity === selectedSeverity;
+    
+    return matchesSearch && matchesSeverity;
+  });
 
   const categoryColors: Record<string, string> = {
     personal: "bg-sky-700/40 text-sky-300 border-sky-600",
@@ -288,7 +293,61 @@ const PolicyGuide: React.FC = () => {
                 aria-label="Search banned and restricted words"
               />
             </div>
-            <p className="text-xs text-neutral-400 mb-3">Displaying {filteredWords.length} of {bannedWords.length} keywords. Severity levels: <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs">High</span>, <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-xs">Medium</span>, <span className="bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs">Low</span>.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <p className="text-xs text-neutral-400">
+                Displaying {filteredWords.length} of {bannedWords.length} keywords.
+                {selectedSeverity && (
+                  <span className="ml-2">
+                    Filtered by: <span className="capitalize font-medium text-neutral-300">{selectedSeverity}</span>
+                  </span>
+                )}
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-neutral-400">Filter by severity:</span>
+                <button
+                  onClick={() => setSelectedSeverity(selectedSeverity === 'high' ? null : 'high')}
+                  className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
+                    selectedSeverity === 'high' 
+                      ? 'bg-red-600 text-white ring-2 ring-red-400' 
+                      : 'bg-red-600/70 text-white hover:bg-red-600'
+                  }`}
+                  aria-label="Filter by high severity"
+                >
+                  High
+                </button>
+                <button
+                  onClick={() => setSelectedSeverity(selectedSeverity === 'medium' ? null : 'medium')}
+                  className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
+                    selectedSeverity === 'medium' 
+                      ? 'bg-orange-500 text-white ring-2 ring-orange-300' 
+                      : 'bg-orange-500/70 text-white hover:bg-orange-500'
+                  }`}
+                  aria-label="Filter by medium severity"
+                >
+                  Medium
+                </button>
+                <button
+                  onClick={() => setSelectedSeverity(selectedSeverity === 'low' ? null : 'low')}
+                  className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
+                    selectedSeverity === 'low' 
+                      ? 'bg-yellow-500 text-black ring-2 ring-yellow-300' 
+                      : 'bg-yellow-500/70 text-black hover:bg-yellow-500'
+                  }`}
+                  aria-label="Filter by low severity"
+                >
+                  Low
+                </button>
+                {selectedSeverity && (
+                  <button
+                    onClick={() => setSelectedSeverity(null)}
+                    className="px-2 py-1 text-xs font-medium rounded-md bg-neutral-600 text-neutral-300 hover:bg-neutral-500 transition-colors"
+                    aria-label="Clear severity filter"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
               {filteredWords.map((item, index) => {
