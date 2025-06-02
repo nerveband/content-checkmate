@@ -18,6 +18,12 @@ const POLICY_RISK_ICON = `<svg class="${ICON_STYLE}" xmlns="http://www.w3.org/20
 
 const SIEP_TOOLTIP = "Social Issues, Elections, or Politics: Content related to these topics often requires special authorization and disclaimers on platforms like Meta.";
 
+// Feature flags
+export const FEATURE_FLAGS = {
+  // Set to false to disable image editing functionality and AI fix features to control costs
+  ENABLE_IMAGE_EDITING: process.env.ENABLE_IMAGE_EDITING !== 'false', // Defaults to true unless explicitly disabled
+} as const;
+
 export const PREDEFINED_EXCLUSION_TAGS: PredefinedExclusionTag[] = [
   { id: 'religious_holidays', label: 'Religious Holidays/Events' },
   { id: 'cultural_events', label: 'Cultural Celebrations/Events' },

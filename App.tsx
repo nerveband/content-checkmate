@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { FileUpload } from './components/FileUpload';
 import { AnalysisDisplay } from './components/AnalysisDisplay';
 import { analyzeContent } from './services/geminiService';
-import { POLICY_GUIDE, PREDEFINED_EXCLUSION_TAGS } from './constants';
+import { POLICY_GUIDE, PREDEFINED_EXCLUSION_TAGS, FEATURE_FLAGS } from './constants';
 import PolicyGuide from './components/PolicyGuide';
 import type { AnalysisResult, FileType, AnalysisTableItem, ExcludedItem, ActiveTab, FluxModelName, GeneratedImage } from './types';
 import { 
@@ -1054,7 +1054,7 @@ const App: React.FC = () => {
       case 'mediaAndText': return "Upload media, add optional text, define exclusions, and get instant policy feedback.";
       case 'textOnly': return "Enter your text content, define exclusions, and get a quick policy check.";
       case 'policyGuide': return "Interactively explore content policy guidelines and restricted keywords.";
-      case 'imageEditor': return "Upload an image and let AI transform it based on your creative instructions.";
+      case 'imageEditor': return FEATURE_FLAGS.ENABLE_IMAGE_EDITING ? "Upload an image and let AI transform it based on your creative instructions." : "";
       default: return "";
     }
   };
@@ -1065,23 +1065,39 @@ const App: React.FC = () => {
     onClear: () => void;
     disabled?: boolean;
     fieldId: string;
-  }> = ({ children, value, onClear, disabled, fieldId }) => (
-    <div className="relative">
-      {children}
-      <button
-        type="button"
-        onClick={onClear}
-        className={`absolute top-1/2 right-3 -translate-y-1/2 text-xs text-neutral-400 hover:text-yellow-400 px-2 py-1 bg-neutral-700 hover:bg-neutral-600 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-yellow-500 transition-opacity duration-150
-          ${(value && !disabled) ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
-        `}
-        aria-label={`Clear ${fieldId}`}
-        aria-hidden={!(value && !disabled)}
-        tabIndex={(value && !disabled) ? 0 : -1}
+  }> = ({ children, value, onClear, disabled, fieldId }) => {
+    const [isFocused, setIsFocused] = useState(false);
+    
+    const shouldShowClear = (value && !disabled) || isFocused;
+    
+    return (
+      <div 
+        className="relative"
+        onFocus={() => setIsFocused(true)}
+        onBlur={(e) => {
+          // Only hide if we're not focusing on the clear button
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setIsFocused(false);
+          }
+        }}
       >
-        Clear
-      </button>
-    </div>
-  );
+        {children}
+        <button
+          type="button"
+          onClick={onClear}
+          className={`absolute top-1/2 right-3 -translate-y-1/2 text-xs text-neutral-400 hover:text-yellow-400 px-2 py-1 bg-neutral-700 hover:bg-neutral-600 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-yellow-500 transition-opacity duration-150
+            ${shouldShowClear ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+          `}
+          aria-label={`Clear ${fieldId}`}
+          aria-hidden={!shouldShowClear}
+          tabIndex={shouldShowClear ? 0 : -1}
+          onMouseDown={(e) => e.preventDefault()} // Prevent focus loss when clicking clear
+        >
+          Clear
+        </button>
+      </div>
+    );
+  };
 
   const handleHighlightIssueInteraction = (issueId: string | null) => {
     setHighlightedIssueId(issueId);
@@ -1272,7 +1288,9 @@ const App: React.FC = () => {
             <TabButton tabId="mediaAndText" currentTab={activeTab} onClick={setActiveTab} icon={<PhotoIcon />}>Media & Text</TabButton>
             <TabButton tabId="textOnly" currentTab={activeTab} onClick={setActiveTab} icon={<ChatBubbleBottomCenterTextIcon />}>Text Only</TabButton>
             <TabButton tabId="policyGuide" currentTab={activeTab} onClick={setActiveTab} icon={<ClipboardDocumentListIcon />}>Policy Guide</TabButton>
-            <TabButton tabId="imageEditor" currentTab={activeTab} onClick={setActiveTab} icon={<SparklesIcon />}>Image Editor</TabButton>
+            {FEATURE_FLAGS.ENABLE_IMAGE_EDITING && (
+              <TabButton tabId="imageEditor" currentTab={activeTab} onClick={setActiveTab} icon={<SparklesIcon />}>Image Editor</TabButton>
+            )}
           </div>
           <button
             onClick={() => setIsSettingsOpen(true)}
@@ -1616,7 +1634,7 @@ const App: React.FC = () => {
             </div>
            )}
 
-           {activeTab === 'imageEditor' && (
+           {activeTab === 'imageEditor' && FEATURE_FLAGS.ENABLE_IMAGE_EDITING && (
             <div role="tabpanel" id="imageEditor-panel" aria-labelledby="imageEditor-tab">
               <ImageEditorForm
                 uploadedImageFile={uploadedEditorImageFile}
@@ -1751,9 +1769,9 @@ const App: React.FC = () => {
               drawableIssuesMap={drawableIssuesMap}
               drawableExcludedMap={drawableExcludedMap}
               isImageTabActive={activeTab === 'mediaAndText' && fileType === 'image'}
-              onSuggestFix={handleSuggestFix}
-              onSuggestAllFixes={handleSuggestAllFixes}
-              canGenerateFixes={activeTab === 'mediaAndText' && fileType === 'image' && !!genAIClient}
+              onSuggestFix={FEATURE_FLAGS.ENABLE_IMAGE_EDITING ? handleSuggestFix : undefined}
+              onSuggestAllFixes={FEATURE_FLAGS.ENABLE_IMAGE_EDITING ? handleSuggestAllFixes : undefined}
+              canGenerateFixes={FEATURE_FLAGS.ENABLE_IMAGE_EDITING && activeTab === 'mediaAndText' && fileType === 'image' && !!genAIClient}
               isVideoAnalysis={activeTab === 'mediaAndText' && fileType === 'video'}
               onTimestampJump={handleTimestampJump}
             />
@@ -1762,24 +1780,26 @@ const App: React.FC = () => {
       </main>
 
       {/* Fix Generation Modal */}
-      <FixGenerationModal
-        isOpen={isFixGenerationModalOpen}
-        onClose={handleCloseFixModal}
-        originalImageUrl={currentOriginalImageForFix}
-        currentFixedImage={currentFixedImage}
-        currentFixPrompt={currentFixPrompt}
-        isLoadingGeneration={isLoadingFixGeneration}
-        generationError={fixGenerationError}
-        fixImagesHistory={generatedFixImagesHistory}
-        targetIssue={currentTargetIssue}
-        isAllIssuesFix={isAllIssuesFix}
-        onGenerateAnother={handleGenerateAnotherFix}
-        onClearHistory={handleClearFixHistory}
-        onGenerateWithPrompt={handleGenerateWithPrompt}
-        isPromptReady={!!currentFixPrompt && !currentFixedImage}
-        selectedFluxModel={selectedFluxModel}
-        onModelChange={setSelectedFluxModel}
-      />
+      {FEATURE_FLAGS.ENABLE_IMAGE_EDITING && (
+        <FixGenerationModal
+          isOpen={isFixGenerationModalOpen}
+          onClose={handleCloseFixModal}
+          originalImageUrl={currentOriginalImageForFix}
+          currentFixedImage={currentFixedImage}
+          currentFixPrompt={currentFixPrompt}
+          isLoadingGeneration={isLoadingFixGeneration}
+          generationError={fixGenerationError}
+          fixImagesHistory={generatedFixImagesHistory}
+          targetIssue={currentTargetIssue}
+          isAllIssuesFix={isAllIssuesFix}
+          onGenerateAnother={handleGenerateAnotherFix}
+          onClearHistory={handleClearFixHistory}
+          onGenerateWithPrompt={handleGenerateWithPrompt}
+          isPromptReady={!!currentFixPrompt && !currentFixedImage}
+          selectedFluxModel={selectedFluxModel}
+          onModelChange={setSelectedFluxModel}
+        />
+      )}
 
       <footer className="w-full max-w-5xl mt-12 text-center text-neutral-500 text-sm">
         <p>&copy; {new Date().getFullYear()} Intuitive Solutions. All rights reserved.</p>
