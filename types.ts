@@ -13,6 +13,8 @@ export interface AnalysisTableItem {
     y_max: number;
   } | null;
   imageSnippet?: string; // Base64 data URL of the cropped image snippet
+  timestamp?: number; // For video content: timestamp in seconds where issue occurs
+  captionText?: string; // For video content: on-screen text/captions at this timestamp
 }
 
 export interface ExcludedItem {
@@ -28,6 +30,8 @@ export interface ExcludedItem {
     y_max: number;
   } | null;
   imageSnippet?: string;
+  timestamp?: number; // For video content: timestamp in seconds where exclusion occurs
+  captionText?: string; // For video content: on-screen text/captions at this timestamp
 }
 
 export interface AnalysisResult {
@@ -36,6 +40,7 @@ export interface AnalysisResult {
   issuesTable: AnalysisTableItem[];
   overallSeverity?: 'High Risk' | 'Medium Risk' | 'Low Risk' | 'Compliant' | string;
   excludedItemsTable?: ExcludedItem[];
+  summaryForCopy?: string; // Plain language summary for copying to designers/developers
 }
 
 export type FileType = 'image' | 'video';

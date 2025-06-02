@@ -182,6 +182,8 @@ const App: React.FC = () => {
   
   const [mediaUserDescription, setMediaUserDescription] = useState<string>('');
   const [mediaUserCta, setMediaUserCta] = useState<string>('');
+  const [postIntent, setPostIntent] = useState<string>('');
+  const [isPostIntentExpanded, setIsPostIntentExpanded] = useState<boolean>(false);
 
   const [textOnlyDescription, setTextOnlyDescription] = useState<string>('');
   const [textOnlyCta, setTextOnlyCta] = useState<string>('');
@@ -230,6 +232,8 @@ const App: React.FC = () => {
   const [currentTargetIssue, setCurrentTargetIssue] = useState<AnalysisTableItem | null>(null);
   const [isAllIssuesFix, setIsAllIssuesFix] = useState<boolean>(false);
 
+  // Video player state
+  const [videoPlayerTimestamp, setVideoPlayerTimestamp] = useState<number | undefined>(undefined);
 
   const currentSelectedModelDetails = AVAILABLE_MODELS.find(m => m.id === selectedModel) || AVAILABLE_MODELS[0];
 
@@ -366,11 +370,13 @@ const App: React.FC = () => {
     if (clearAlsoMediaText) {
       setMediaUserDescription('');
       setMediaUserCta('');
+      setPostIntent('');
     }
   };
   
   const clearMediaUserDescription = () => setMediaUserDescription('');
   const clearMediaUserCta = () => setMediaUserCta('');
+  const clearPostIntent = () => setPostIntent('');
   const clearTextOnlyDescription = () => {
     setTextOnlyDescription('');
     setAnalysisResult(null); 
@@ -580,7 +586,8 @@ const App: React.FC = () => {
         ctaToSend,
         isVideoAnalysis,
         currentExclusionTags.length > 0 ? currentExclusionTags : undefined,
-        currentCustomExclusions.length > 0 ? currentCustomExclusions : undefined
+        currentCustomExclusions.length > 0 ? currentCustomExclusions : undefined,
+        postIntent.trim() ? postIntent : undefined
       );
       
       if (result && activeTab === 'mediaAndText' && fileType === 'image' && filePreview) {
@@ -928,6 +935,12 @@ const App: React.FC = () => {
     setFixGenerationError(null);
   }, []);
 
+  const handleTimestampJump = useCallback((timestamp: number) => {
+    setVideoPlayerTimestamp(timestamp);
+    // Trigger a re-render to jump to timestamp
+    setTimeout(() => setVideoPlayerTimestamp(undefined), 100);
+  }, []);
+
 
   const TabButton: React.FC<{
     tabId: ActiveTab;
@@ -1233,6 +1246,44 @@ const App: React.FC = () => {
                         />
                       </InputFieldWrapper>
                   </div>
+                  <div>
+                      <button
+                        type="button"
+                        onClick={() => setIsPostIntentExpanded(!isPostIntentExpanded)}
+                        className="flex items-center justify-between w-full p-3 text-left bg-neutral-700/50 border border-neutral-600 rounded-md hover:bg-neutral-700/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
+                        aria-expanded={isPostIntentExpanded}
+                        aria-controls="post-intent-content"
+                      >
+                        <span className="flex items-center text-sm font-medium text-neutral-300">
+                          <SparklesIcon className="w-4 h-4 mr-2 text-yellow-400"/>
+                          Post Intent/Goal (Optional)
+                        </span>
+                        <span className={`transform transition-transform duration-200 ${isPostIntentExpanded ? 'rotate-180' : ''}`}>
+                          <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </span>
+                      </button>
+                      {isPostIntentExpanded && (
+                        <div id="post-intent-content" className="mt-2 p-3 bg-neutral-800/50 border border-neutral-600 rounded-md">
+                          <p className="text-xs text-neutral-400 mb-3">
+                            Describe the intended purpose or goal of this post to help generate more targeted policy recommendations.
+                          </p>
+                          <InputFieldWrapper value={postIntent} onClear={clearPostIntent} disabled={formInputsDisabled} fieldId="post intent">
+                            <textarea
+                              id="postIntent"
+                              rows={2}
+                              className="w-full p-2 pr-16 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-500 text-sm disabled:opacity-70 disabled:bg-neutral-600/50"
+                              placeholder="e.g., 'Promote our new product launch to increase sales' or 'Build brand awareness for our eco-friendly initiative'"
+                              value={postIntent}
+                              onChange={(e) => setPostIntent(e.target.value)}
+                              disabled={formInputsDisabled}
+                              aria-label="Post Intent or Goal"
+                            />
+                          </InputFieldWrapper>
+                        </div>
+                      )}
+                  </div>
               </div>
 
               <ExclusionRulesInputs
@@ -1346,8 +1397,19 @@ const App: React.FC = () => {
                           )}
                         </div>
                       )}
-                      {fileType === 'video' && filePreview && ( 
-                        <img src={filePreview} alt="Video first frame preview" className="max-w-xs max-h-72 object-contain mx-auto rounded-lg shadow-lg border-2 border-neutral-700" />
+                      {fileType === 'video' && uploadedFile && (
+                        <div className="w-full max-w-md mx-auto">
+                          <video 
+                            src={URL.createObjectURL(uploadedFile)}
+                            controls
+                            className="w-full rounded-lg shadow-lg border-2 border-neutral-700"
+                            onTimeUpdate={(e) => {
+                              if (videoPlayerTimestamp !== undefined) {
+                                e.currentTarget.currentTime = videoPlayerTimestamp;
+                              }
+                            }}
+                          />
+                        </div>
                       )}
                       <div className="text-sm text-neutral-400 mt-2 space-y-0.5">
                         {uploadedFile && <p>Name: <MarkdownRenderer text={uploadedFile.name} className="inline"/> </p>}
@@ -1413,6 +1475,44 @@ const App: React.FC = () => {
                           aria-label="Call to Action for Text-Only Analysis"
                           />
                         </InputFieldWrapper>
+                    </div>
+                    <div>
+                        <button
+                          type="button"
+                          onClick={() => setIsPostIntentExpanded(!isPostIntentExpanded)}
+                          className="flex items-center justify-between w-full p-3 text-left bg-neutral-700/50 border border-neutral-600 rounded-md hover:bg-neutral-700/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
+                          aria-expanded={isPostIntentExpanded}
+                          aria-controls="post-intent-content-text"
+                        >
+                          <span className="flex items-center text-sm font-medium text-neutral-300">
+                            <SparklesIcon className="w-4 h-4 mr-2 text-yellow-400"/>
+                            Post Intent/Goal (Optional)
+                          </span>
+                          <span className={`transform transition-transform duration-200 ${isPostIntentExpanded ? 'rotate-180' : ''}`}>
+                            <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </span>
+                        </button>
+                        {isPostIntentExpanded && (
+                          <div id="post-intent-content-text" className="mt-2 p-3 bg-neutral-800/50 border border-neutral-600 rounded-md">
+                            <p className="text-xs text-neutral-400 mb-3">
+                              Describe the intended purpose or goal of this post to help generate more targeted policy recommendations.
+                            </p>
+                            <InputFieldWrapper value={postIntent} onClear={clearPostIntent} disabled={formInputsDisabled} fieldId="post intent">
+                              <textarea
+                                id="postIntentTextOnly"
+                                rows={2}
+                                className="w-full p-2 pr-16 bg-neutral-700 border border-neutral-600 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 text-neutral-200 placeholder-neutral-500 text-sm disabled:opacity-70 disabled:bg-neutral-600/50"
+                                placeholder="e.g., 'Promote our new product launch to increase sales' or 'Build brand awareness for our eco-friendly initiative'"
+                                value={postIntent}
+                                onChange={(e) => setPostIntent(e.target.value)}
+                                disabled={formInputsDisabled}
+                                aria-label="Post Intent or Goal"
+                              />
+                            </InputFieldWrapper>
+                          </div>
+                        )}
                     </div>
                 </div>
                 <ExclusionRulesInputs
@@ -1570,6 +1670,8 @@ const App: React.FC = () => {
               onSuggestFix={handleSuggestFix}
               onSuggestAllFixes={handleSuggestAllFixes}
               canGenerateFixes={activeTab === 'mediaAndText' && fileType === 'image' && !!genAIClient}
+              isVideoAnalysis={activeTab === 'mediaAndText' && fileType === 'video'}
+              onTimestampJump={handleTimestampJump}
             />
           )}
         </div>

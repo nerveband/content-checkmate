@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { AnalysisResult, AnalysisTableItem, ExcludedItem } from '../types';
-import { CheckCircleIcon, InformationCircleIcon, ExclamationTriangleIcon, EyeIcon, SparklesIcon } from './icons';
+import { CheckCircleIcon, InformationCircleIcon, ExclamationTriangleIcon, EyeIcon, SparklesIcon, ClockIcon, ClipboardIcon } from './icons';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 type SeverityLevel = 'High Risk' | 'Medium Risk' | 'Low Risk' | 'Compliant' | 'High' | 'Medium' | 'Low' | string | undefined;
@@ -125,7 +125,75 @@ interface AnalysisDisplayProps {
   onSuggestFix?: (issue: AnalysisTableItem) => void;
   onSuggestAllFixes?: (issues: AnalysisTableItem[]) => void;
   canGenerateFixes?: boolean;
+  isVideoAnalysis?: boolean;
+  videoSrc?: string;
+  onTimestampJump?: (timestamp: number) => void;
 }
+
+const CopyableSummary: React.FC<{ summary: string }> = ({ summary }) => {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(summary);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  return (
+    <div className="bg-neutral-700/50 border border-neutral-600 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-lg font-semibold text-yellow-400 flex items-center">
+          <ClipboardIcon className="w-5 h-5 mr-2" />
+          Summary for Designers/Developers
+        </h4>
+        <button
+          onClick={handleCopy}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center ${
+            isCopied 
+              ? 'bg-green-600 text-white' 
+              : 'bg-yellow-600 hover:bg-yellow-500 text-black'
+          }`}
+          aria-label="Copy summary to clipboard"
+        >
+          <ClipboardIcon className="w-4 h-4 mr-1.5" />
+          {isCopied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+      <div className="bg-neutral-800 rounded-md p-3 border border-neutral-700">
+        <MarkdownRenderer 
+          text={summary} 
+          className="text-neutral-200 text-sm leading-relaxed whitespace-pre-wrap"
+        />
+      </div>
+    </div>
+  );
+};
+
+const formatTimestamp = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const TimestampButton: React.FC<{ 
+  timestamp: number; 
+  onJump: (timestamp: number) => void;
+  className?: string;
+}> = ({ timestamp, onJump, className = "" }) => (
+  <button
+    onClick={() => onJump(timestamp)}
+    className={`inline-flex items-center px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded transition-colors duration-200 ${className}`}
+    aria-label={`Jump to ${formatTimestamp(timestamp)}`}
+    title={`Click to jump to ${formatTimestamp(timestamp)} in video`}
+  >
+    <ClockIcon className="w-3 h-3 mr-1" />
+    {formatTimestamp(timestamp)}
+  </button>
+);
 
 export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ 
     result, 
@@ -136,7 +204,9 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
     isImageTabActive,
     onSuggestFix,
     onSuggestAllFixes,
-    canGenerateFixes = false
+    canGenerateFixes = false,
+    isVideoAnalysis = false,
+    onTimestampJump
 }) => {
   const hasIssues = result.issuesTable && result.issuesTable.length > 0;
   const hasExcludedItems = result.excludedItemsTable && result.excludedItemsTable.length > 0;
@@ -203,6 +273,7 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                 <tr>
                   {isImageTabActive && drawableIssuesMap.size > 0 && <th scope="col" className="px-3 py-3 w-[5%] text-center">#</th>}
                   <th scope="col" className="px-4 py-3 w-[10%]">Severity</th>
+                  {isVideoAnalysis && <th scope="col" className="px-4 py-3 w-[10%] text-center">Timestamp</th>}
                   <th scope="col" className="px-6 py-3 w-[25%]">Identified Content</th>
                   <th scope="col" className="px-6 py-3 w-[35%]">Issue Description</th>
                   <th scope="col" className="px-6 py-3 w-[25%]">Recommendation</th>
@@ -240,6 +311,18 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                       <td className={`px-4 py-4 border-l-4 ${isHighlighted ? 'border-cyan-400' : itemSeverityStyles.borderColor}`}>
                         <SeverityBadge severity={item.severity} />
                       </td>
+                      {isVideoAnalysis && (
+                        <td className="px-4 py-4 text-center">
+                          {item.timestamp !== undefined && item.timestamp !== null && onTimestampJump ? (
+                            <TimestampButton 
+                              timestamp={item.timestamp} 
+                              onJump={onTimestampJump}
+                            />
+                          ) : (
+                            <span className="text-neutral-500 text-xs">N/A</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-6 py-4 font-medium text-neutral-200 whitespace-pre-wrap">
                         {item.imageSnippet && item.sourceContext === 'primaryImage' && (
                           <img 
@@ -249,6 +332,11 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                           />
                         )}
                         <MarkdownRenderer text={item.identifiedContent} />
+                        {item.captionText && (
+                          <div className="mt-1 text-xs text-neutral-400 bg-neutral-700/50 px-2 py-1 rounded">
+                            <strong>Caption:</strong> {item.captionText}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-pre-wrap"><MarkdownRenderer text={item.issueDescription} /></td>
                       <td className="px-6 py-4 whitespace-pre-wrap"><MarkdownRenderer text={item.recommendation} /></td>
@@ -301,12 +389,20 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                 >
                   <div className="flex justify-between items-start mb-2">
                     <SeverityBadge severity={item.severity} />
-                    {isImageTabActive && boxDisplayNumber && (
-                      <span className={`font-mono text-sm px-2 py-0.5 rounded
-                        ${isHighlighted ? 'bg-cyan-500 text-black font-bold' : 'bg-neutral-600 text-yellow-300'}`}>
-                        # {boxDisplayNumber}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {isVideoAnalysis && item.timestamp !== undefined && item.timestamp !== null && onTimestampJump && (
+                        <TimestampButton 
+                          timestamp={item.timestamp} 
+                          onJump={onTimestampJump}
+                        />
+                      )}
+                      {isImageTabActive && boxDisplayNumber && (
+                        <span className={`font-mono text-sm px-2 py-0.5 rounded
+                          ${isHighlighted ? 'bg-cyan-500 text-black font-bold' : 'bg-neutral-600 text-yellow-300'}`}>
+                          # {boxDisplayNumber}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="mb-2">
                     <strong className="block text-sm font-semibold text-yellow-300">Identified:</strong>
@@ -318,6 +414,11 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                         />
                      )}
                     <MarkdownRenderer text={item.identifiedContent} className="text-neutral-200 whitespace-pre-wrap text-sm" />
+                    {item.captionText && (
+                      <div className="mt-1 text-xs text-neutral-400 bg-neutral-700/50 px-2 py-1 rounded">
+                        <strong>Caption:</strong> {item.captionText}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-2">
                     <strong className="block text-sm font-semibold text-yellow-300">Issue:</strong>
@@ -365,6 +466,7 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
               <thead className="text-xs text-sky-300 uppercase bg-neutral-700/80">
                 <tr>
                   {isImageTabActive && drawableExcludedMap.size > 0 && <th scope="col" className="px-3 py-3 w-[5%] text-center">#</th>}
+                  {isVideoAnalysis && <th scope="col" className="px-4 py-3 w-[10%] text-center">Timestamp</th>}
                   <th scope="col" className="px-6 py-3 w-[25%]">Identified Content</th>
                   <th scope="col" className="px-6 py-3 w-[30%]">Matched Rule</th>
                   <th scope="col" className="px-6 py-3 rounded-tr-lg w-[40%]">AI Note / Context</th>
@@ -398,6 +500,18 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                           {boxDisplayNumber ? `E${boxDisplayNumber}` : ''}
                         </td>
                       )}
+                      {isVideoAnalysis && (
+                        <td className="px-4 py-4 text-center">
+                          {item.timestamp !== undefined && item.timestamp !== null && onTimestampJump ? (
+                            <TimestampButton 
+                              timestamp={item.timestamp} 
+                              onJump={onTimestampJump}
+                            />
+                          ) : (
+                            <span className="text-neutral-500 text-xs">N/A</span>
+                          )}
+                        </td>
+                      )}
                        <td className={`px-6 py-4 font-medium text-neutral-200 whitespace-pre-wrap border-l-4 ${borderColor}`}>
                         {item.imageSnippet && item.sourceContext === 'primaryImage' && (
                           <img 
@@ -407,6 +521,11 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                           />
                         )}
                         <MarkdownRenderer text={item.identifiedContent} />
+                        {item.captionText && (
+                          <div className="mt-1 text-xs text-neutral-400 bg-neutral-700/50 px-2 py-1 rounded">
+                            <strong>Caption:</strong> {item.captionText}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-pre-wrap"><MarkdownRenderer text={item.matchedRule} /></td>
                       <td className="px-6 py-4 whitespace-pre-wrap"><MarkdownRenderer text={item.aiNote} /></td>
@@ -440,12 +559,20 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                 >
                   <div className="flex justify-between items-start mb-2">
                      <span className="text-sm font-medium text-sky-300">Excluded Item</span>
-                     {isImageTabActive && boxDisplayNumber && (
-                      <span className={`font-mono text-sm px-2 py-0.5 rounded
-                        ${isHighlighted ? 'bg-cyan-500 text-black font-bold' : 'bg-neutral-600 text-sky-300'}`}>
-                        # E{boxDisplayNumber}
-                      </span>
-                    )}
+                     <div className="flex items-center gap-2">
+                       {isVideoAnalysis && item.timestamp !== undefined && item.timestamp !== null && onTimestampJump && (
+                         <TimestampButton 
+                           timestamp={item.timestamp} 
+                           onJump={onTimestampJump}
+                         />
+                       )}
+                       {isImageTabActive && boxDisplayNumber && (
+                        <span className={`font-mono text-sm px-2 py-0.5 rounded
+                          ${isHighlighted ? 'bg-cyan-500 text-black font-bold' : 'bg-neutral-600 text-sky-300'}`}>
+                          # E{boxDisplayNumber}
+                        </span>
+                      )}
+                     </div>
                   </div>
                   <div className="mb-2">
                     <strong className="block text-sm font-semibold text-sky-300">Identified:</strong>
@@ -457,6 +584,11 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                         />
                      )}
                     <MarkdownRenderer text={item.identifiedContent} className="text-neutral-200 whitespace-pre-wrap text-sm" />
+                    {item.captionText && (
+                      <div className="mt-1 text-xs text-neutral-400 bg-neutral-700/50 px-2 py-1 rounded">
+                        <strong>Caption:</strong> {item.captionText}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-2">
                     <strong className="block text-sm font-semibold text-sky-300">Matched Rule:</strong>
@@ -471,6 +603,11 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
             })}
           </div>
         </SectionCard>
+      )}
+
+      {/* Copyable Summary Section */}
+      {result.summaryForCopy && (
+        <CopyableSummary summary={result.summaryForCopy} />
       )}
 
     </div>

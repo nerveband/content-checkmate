@@ -11,11 +11,12 @@ const generatePrompt = (
     hasDescription: boolean, 
     hasCta: boolean,
     selectedExclusionTags?: string[],
-    customExclusions?: string
+    customExclusions?: string,
+    postIntent?: string
 ): string => {
   let mediaSection = "";
   if (isVideo) {
-    mediaSection = "1.  Media: A video file. The entire video content will be analyzed.";
+    mediaSection = "1.  Media: A video file. The entire video content will be analyzed with timestamp-based flagging for specific moments and on-screen text/captions.";
   } else if (hasDescription || hasCta) { 
      mediaSection = "1.  Media: An image file.";
   } else if (!isVideo && !hasDescription && !hasCta) { 
@@ -31,10 +32,13 @@ const generatePrompt = (
       textCounter = 2;
   }
 
+  const postIntentSection = postIntent?.trim() ? `${textCounter++}. Post Intent/Goal: The intended purpose or goal of this content.` : "";
+  
   const providedMaterials = [
     mediaSection,
     descriptionSection,
-    ctaSection
+    ctaSection,
+    postIntentSection
   ].filter(Boolean).join("\\n");
 
   let exclusionRulesSection = "";
@@ -86,26 +90,28 @@ ${exclusionPromptPart}
 **Analysis Request:**
 
 Based on ALL provided materials (media, if any, AND any accompanying text) that DO NOT MATCH any exclusion rules:
-1.  Provide an "overallAssessment" of its compliance. This MUST be a **concise summary (1-2 sentences)** using **simple, clear, and direct language**.
+1.  Provide an "overallAssessment" of its compliance. This MUST be a **concise summary (1-2 sentences)** using **simple, clear, and direct language**. ${postIntent?.trim() ? `Consider the stated post intent/goal when evaluating compliance and provide context-aware recommendations.` : ''}
 2.  Assign an 'overallSeverity' to this assessment, using ONE of the following exact string values: 'Compliant', 'Low Risk', 'Medium Risk', 'High Risk'.
     - 'Compliant': No significant issues found in non-excluded content.
     - 'Low Risk': Minor issues or suggestions in non-excluded content, mostly compliant.
     - 'Medium Risk': Notable issues in non-excluded content that require attention and review.
     - 'High Risk': Serious policy violations in non-excluded content requiring immediate action.
     - If the "issuesTable" (defined below) is empty SOLELY because all identified content matched exclusion rules (and is thus in "excludedItemsTable"), the "overallAssessment" should clearly state this (e.g., "All potentially problematic content matched active exclusion rules. No other policy violations were found in the remaining content."), and "overallSeverity" should be 'Compliant'. If "issuesTable" is empty because no violations were found at all (even without exclusions), then "overallSeverity" is also 'Compliant'.
-3.  Offer "recommendationsFeedback". This MUST be **succinct, clear, and actionable**, using **simple language**. If no issues in non-excluded content, state that it's compliant or that all issues were excluded.
+3.  Offer "recommendationsFeedback". This MUST be **succinct, clear, and actionable**, using **simple language**. ${postIntent?.trim() ? `Tailor recommendations to align with the stated intent while ensuring policy compliance.` : ''} If no issues in non-excluded content, state that it's compliant or that all issues were excluded.
 4.  Generate a comparison table ('issuesTable'). Each item in the table MUST be an object with the following fields:
     - "id": A unique string identifier for this issue (e.g., "issue-1", "issue-2").
     - "sourceContext": A string indicating the origin of the content. Use ONE of: 'primaryImage', 'videoFrame', 'descriptionText', 'ctaText'.
     - "identifiedContent": Specific words, phrases, or visual elements. 
         - If sourceContext is 'primaryImage': "Visual (Image): [description of visual element or **text content of overlay** with **bolded keywords**]"
-        - If sourceContext is 'videoFrame': "Visual (Video): [description of issue found in video, e.g., specific scene, dialogue, or overall theme, with **bolded keywords**]"
+        - If sourceContext is 'videoFrame': "Visual (Video): [description of issue found in video at specific timestamp, including any on-screen text/captions, with **bolded keywords**]"
         - If sourceContext is 'descriptionText': "Text (Description): '[**problematic phrase**]'"
         - If sourceContext is 'ctaText': "Text (CTA): '[**problematic phrase**]'"
     - "issueDescription": SUCCINCTLY explain why this content is an issue according to the policy guide. KEEP THIS **VERY BRIEF AND SIMPLE**.
     - "recommendation": Suggest **CLEAR, SIMPLE, AND ACTIONABLE** changes to make the content compliant. KEEP THIS **VERY BRIEF AND ACTIONABLE**.
     - "severity": Assign a severity level to EACH issue, using ONE of the following exact string values: 'Low', 'Medium', 'High'.
     - "boundingBox": Optional. If "sourceContext" is 'primaryImage' AND the issue pertains to a specific, locatable visual element in THE UPLOADED IMAGE, provide **a single object** with normalized bounding box coordinates: { "x_min": number, "y_min": number, "x_max": number, "y_max": number }. Coordinates must be between 0.0 and 1.0. (0,0) is top-left. If not applicable for 'primaryImage' or for any other sourceContext, omit or set to null.
+    - "timestamp": Optional. If "sourceContext" is 'videoFrame', provide the timestamp in seconds where the issue occurs (e.g., 23.5 for 23.5 seconds into the video). If not applicable, omit or set to null.
+    - "captionText": Optional. If "sourceContext" is 'videoFrame' and there is on-screen text/captions at the timestamp, provide the exact text content. If no captions or not applicable, omit or set to null.
     - If no issues are found in content NOT matching exclusion rules, "issuesTable" MUST be an empty array.
 
 **Output Format:**
@@ -125,7 +131,9 @@ Example structure:
       "issueDescription": "string",
       "recommendation": "string",
       "severity": "string (High | Medium | Low)",
-      "boundingBox": { "x_min": number, "y_min": number, "x_max": number, "y_max": number } | null
+      "boundingBox": { "x_min": number, "y_min": number, "x_max": number, "y_max": number } | null,
+      "timestamp": number | null,
+      "captionText": "string" | null
     }
   ],
   "excludedItemsTable": [
@@ -135,15 +143,22 @@ Example structure:
       "identifiedContent": "string",
       "matchedRule": "string",
       "aiNote": "string",
-      "boundingBox": { "x_min": number, "y_min": number, "x_max": number, "y_max": number } | null
+      "boundingBox": { "x_min": number, "y_min": number, "x_max": number, "y_max": number } | null,
+      "timestamp": number | null,
+      "captionText": "string" | null
     }
-  ]
+  ],
+  "summaryForCopy": "string (plain language summary of issues and recommended changes for sharing with designers/developers)"
 }
+
+5.  Generate a "summaryForCopy" field containing a plain language summary of all issues and recommended changes. This should be written as clear, actionable instructions that can be copy-pasted and sent to designers, developers, or content creators. Format it as numbered steps or bullet points for easy implementation.
 
 Important:
 - "issuesTable" and "excludedItemsTable" MUST be empty arrays if no items fit their respective criteria.
 - Ensure all string values for "overallSeverity", "issuesTable.severity", "issuesTable.sourceContext", "excludedItemsTable.sourceContext" strictly adhere to the specified categories.
 - "boundingBox" should only be a single object or null for 'primaryImage' issues where it's relevant and locatable. For 'videoFrame' issues, it should generally be null.
+- "timestamp" should be provided for 'videoFrame' issues with the exact time in seconds where the problem occurs.
+- "captionText" should contain any on-screen text visible at the timestamp for 'videoFrame' issues.
 - For all text fields, prioritize **brevity, clarity, and simple language**.
 `;
 }
@@ -194,7 +209,8 @@ export const analyzeContent = async (
   userCta?: string,
   isVideo: boolean = false,
   selectedExclusionTags?: string[],
-  customExclusions?: string
+  customExclusions?: string,
+  postIntent?: string
 ): Promise<AnalysisResult> => {
   if (!client) {
     throw new Error("Gemini API client is not initialized. API Key might be missing or invalid.");
@@ -216,7 +232,8 @@ export const analyzeContent = async (
     !!userDescription, 
     !!userCta,
     selectedExclusionTags,
-    customExclusions
+    customExclusions,
+    postIntent
   );
   
   const parts: Part[] = [{ text: promptContent }];
@@ -235,6 +252,9 @@ export const analyzeContent = async (
   }
   if (userCta) {
     parts.push({ text: `User-provided Call to Action: ${userCta}` });
+  }
+  if (postIntent?.trim()) {
+    parts.push({ text: `Post Intent/Goal: ${postIntent}` });
   }
 
   try {
