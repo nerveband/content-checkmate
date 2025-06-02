@@ -148,10 +148,26 @@ Example structure:
       "captionText": "string" | null
     }
   ],
-  "summaryForCopy": "string (plain language summary of issues and recommended changes for sharing with designers/developers)"
+  "summaryForCopy": "string (plain language summary of issues and recommended changes for sharing with designers/developers)",
+  "suggestedFixes": "string (specific actionable suggestions for compliance while respecting the stated intent)"
 }
 
 5.  Generate a "summaryForCopy" field containing a plain language summary of all issues and recommended changes. This should be written as clear, actionable instructions that can be copy-pasted and sent to designers, developers, or content creators. Format it as numbered steps or bullet points for easy implementation.
+
+6.  Generate a "suggestedFixes" field containing specific, actionable suggestions for making the content compliant while respecting the stated post intent/goal${postIntent?.trim() ? ' ("' + postIntent + '")' : ''}. These suggestions should be:
+    - **Specific and concrete**: Provide exact textual changes, visual modifications, placement adjustments, sizing recommendations, color changes, etc.
+    - **Intent-aware**: Respect the stated goal while ensuring policy compliance
+    - **Exclusion-smart**: Consider the active exclusion rules when making suggestions
+    - **Multi-faceted**: Cover textual, graphical, imagery, placement, and sizing aspects where relevant
+    - **Easy to implement**: Clear, step-by-step instructions that can be directly applied
+    
+    Format as bullet points or numbered steps. Examples:
+    • "Replace '**guaranteed results**' with 'potential benefits' to avoid making unrealistic claims"
+    • "Move the product image to the right side and reduce size by 30% to make text more prominent"
+    • "Change the red warning text to neutral blue and use smaller font"
+    • "Add a disclaimer below the CTA: 'Results may vary based on individual circumstances'"
+    
+    If no issues were found or all issues were excluded, provide suggestions for optimization that maintain compliance.
 
 Important:
 - "issuesTable" and "excludedItemsTable" MUST be empty arrays if no items fit their respective criteria.

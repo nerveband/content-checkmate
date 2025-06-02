@@ -41,6 +41,7 @@ export interface AnalysisResult {
   overallSeverity?: 'High Risk' | 'Medium Risk' | 'Low Risk' | 'Compliant' | string;
   excludedItemsTable?: ExcludedItem[];
   summaryForCopy?: string; // Plain language summary for copying to designers/developers
+  suggestedFixes?: string; // AI-generated actionable suggestions for compliance while respecting intent
 }
 
 export type FileType = 'image' | 'video';

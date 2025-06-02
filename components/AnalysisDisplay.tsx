@@ -130,12 +130,18 @@ interface AnalysisDisplayProps {
   onTimestampJump?: (timestamp: number) => void;
 }
 
-const CopyableSummary: React.FC<{ summary: string }> = ({ summary }) => {
+const CopyableContent: React.FC<{ 
+  content: string; 
+  title: string; 
+  icon: React.ReactNode;
+  bgColor?: string;
+  titleColor?: string;
+}> = ({ content, title, icon, bgColor = 'bg-neutral-700/50', titleColor = 'text-yellow-400' }) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(summary);
+      await navigator.clipboard.writeText(content);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
@@ -144,11 +150,11 @@ const CopyableSummary: React.FC<{ summary: string }> = ({ summary }) => {
   };
 
   return (
-    <div className="bg-neutral-700/50 border border-neutral-600 rounded-lg p-4">
+    <div className={`${bgColor} border border-neutral-600 rounded-lg p-4`}>
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-lg font-semibold text-yellow-400 flex items-center">
-          <ClipboardIcon className="w-5 h-5 mr-2" />
-          Summary for Designers/Developers
+        <h4 className={`text-lg font-semibold ${titleColor} flex items-center`}>
+          {icon}
+          {title}
         </h4>
         <button
           onClick={handleCopy}
@@ -157,7 +163,7 @@ const CopyableSummary: React.FC<{ summary: string }> = ({ summary }) => {
               ? 'bg-green-600 text-white' 
               : 'bg-yellow-600 hover:bg-yellow-500 text-black'
           }`}
-          aria-label="Copy summary to clipboard"
+          aria-label={`Copy ${title.toLowerCase()} to clipboard`}
         >
           <ClipboardIcon className="w-4 h-4 mr-1.5" />
           {isCopied ? 'Copied!' : 'Copy'}
@@ -165,13 +171,31 @@ const CopyableSummary: React.FC<{ summary: string }> = ({ summary }) => {
       </div>
       <div className="bg-neutral-800 rounded-md p-3 border border-neutral-700">
         <MarkdownRenderer 
-          text={summary} 
+          text={content} 
           className="text-neutral-200 text-sm leading-relaxed whitespace-pre-wrap"
         />
       </div>
     </div>
   );
 };
+
+const CopyableSummary: React.FC<{ summary: string }> = ({ summary }) => (
+  <CopyableContent 
+    content={summary}
+    title="Summary"
+    icon={<ClipboardIcon className="w-5 h-5 mr-2" />}
+  />
+);
+
+const CopyableSuggestions: React.FC<{ suggestions: string }> = ({ suggestions }) => (
+  <CopyableContent 
+    content={suggestions}
+    title="Suggested Fixes"
+    icon={<SparklesIcon className="w-5 h-5 mr-2" />}
+    bgColor="bg-green-900/30"
+    titleColor="text-green-400"
+  />
+);
 
 const formatTimestamp = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
@@ -617,6 +641,11 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
             })}
           </div>
         </SectionCard>
+      )}
+
+      {/* Suggested Fixes Section */}
+      {result.suggestedFixes && (
+        <CopyableSuggestions suggestions={result.suggestedFixes} />
       )}
 
       {/* Copyable Summary Section */}
