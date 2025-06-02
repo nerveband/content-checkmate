@@ -1738,7 +1738,20 @@ const App: React.FC = () => {
                     disabled={formInputsDisabled}
                   />
                   <span className="text-sm text-neutral-300">
-                    <strong>SIEP</strong> (Social Issues, Elections, or Politics) content not applicable - ignore SIEP violations for this analysis
+                    <Tooltip
+                      text={<><strong>SIEP</strong> (Social Issues, Elections, or Politics) content not applicable - ignore SIEP violations for this analysis</>}
+                      tooltipContent={
+                        <div className="text-xs leading-relaxed">
+                          When checked, the AI will identify SIEP content but categorize it separately and ignore it as a violation.
+                          <br /><br />
+                          <strong>Use this when:</strong>
+                          <br />• You know your content relates to social issues, elections, or politics
+                          <br />• You want to check for OTHER policy violations beyond SIEP
+                          <br />• You need to see what else might block your content from approval
+                        </div>
+                      }
+                      className="decoration-yellow-500/50"
+                    />
                   </span>
                 </label>
               </div>
