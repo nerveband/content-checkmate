@@ -1065,39 +1065,24 @@ const App: React.FC = () => {
     onClear: () => void;
     disabled?: boolean;
     fieldId: string;
-  }> = ({ children, value, onClear, disabled, fieldId }) => {
-    const [isFocused, setIsFocused] = useState(false);
-    
-    const shouldShowClear = (value && !disabled) || isFocused;
-    
-    return (
-      <div 
-        className="relative"
-        onFocus={() => setIsFocused(true)}
-        onBlur={(e) => {
-          // Only hide if we're not focusing on the clear button
-          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-            setIsFocused(false);
-          }
-        }}
+  }> = useCallback(({ children, value, onClear, disabled, fieldId }) => (
+    <div className="relative">
+      {children}
+      <button
+        type="button"
+        onClick={onClear}
+        className={`absolute top-1/2 right-3 -translate-y-1/2 text-xs text-neutral-400 hover:text-yellow-400 px-2 py-1 bg-neutral-700 hover:bg-neutral-600 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-yellow-500 transition-opacity duration-150
+          ${(value && !disabled) ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+        `}
+        aria-label={`Clear ${fieldId}`}
+        aria-hidden={!(value && !disabled)}
+        tabIndex={(value && !disabled) ? 0 : -1}
+        onMouseDown={(e) => e.preventDefault()} // Prevent focus loss when clicking clear
       >
-        {children}
-        <button
-          type="button"
-          onClick={onClear}
-          className={`absolute top-1/2 right-3 -translate-y-1/2 text-xs text-neutral-400 hover:text-yellow-400 px-2 py-1 bg-neutral-700 hover:bg-neutral-600 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-yellow-500 transition-opacity duration-150
-            ${shouldShowClear ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
-          `}
-          aria-label={`Clear ${fieldId}`}
-          aria-hidden={!shouldShowClear}
-          tabIndex={shouldShowClear ? 0 : -1}
-          onMouseDown={(e) => e.preventDefault()} // Prevent focus loss when clicking clear
-        >
-          Clear
-        </button>
-      </div>
-    );
-  };
+        Clear
+      </button>
+    </div>
+  ), []);
 
   const handleHighlightIssueInteraction = (issueId: string | null) => {
     setHighlightedIssueId(issueId);
