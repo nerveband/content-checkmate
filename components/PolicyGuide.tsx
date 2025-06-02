@@ -21,9 +21,7 @@ const PolicyGuide: React.FC = () => {
   const sectionIds = ['banned', 'siep', 'visual', 'geo', 'ai', 'pipeline', 'riskAssessment'];
   
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    // Initially expand some key sections for better UX
-    banned: true,
-    riskAssessment: true,
+    // All sections collapsed by default
   });
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -250,7 +248,7 @@ const PolicyGuide: React.FC = () => {
             </div>
         </Section>
 
-        <Section title="Risk Level Guide" sectionId="riskAssessment" icon={<Target className="w-5 h-5 text-yellow-300" />} defaultExpanded={expandedSections.riskAssessment ?? true}>
+        <Section title="Risk Level Guide" sectionId="riskAssessment" icon={<Target className="w-5 h-5 text-yellow-300" />} defaultExpanded={expandedSections.riskAssessment ?? false}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div className="p-4 bg-red-800/30 rounded-lg border border-red-600">
               <div className="flex items-center justify-between mb-2">
@@ -278,7 +276,7 @@ const PolicyGuide: React.FC = () => {
           </div>
         </Section>
 
-        <Section title="Banned & Restricted Words" sectionId="banned" icon={<AlertTriangle className="w-5 h-5 text-red-400" />} defaultExpanded={expandedSections.banned ?? true}>
+        <Section title="Banned & Restricted Words" sectionId="banned" icon={<AlertTriangle className="w-5 h-5 text-red-400" />} defaultExpanded={expandedSections.banned ?? false}>
             <div className="relative mt-4 mb-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
               <input
@@ -296,7 +294,7 @@ const PolicyGuide: React.FC = () => {
               {filteredWords.map((item, index) => (
                 <div 
                   key={index} 
-                  className={`flex flex-col p-3 rounded-md border ${categoryColors[item.category] || 'bg-neutral-600/50 text-neutral-300 border-neutral-500'}`}
+                  className="flex flex-col p-3 rounded-md border bg-neutral-700/50 text-neutral-300 border-neutral-500"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium">{item.word}</span>
@@ -304,7 +302,7 @@ const PolicyGuide: React.FC = () => {
                   </div>
                   {item.recommendation && (
                     <p className="text-xs text-neutral-300/80 mt-1 leading-tight">
-                      <strong className="text-amber-400">{item.recommendation.split(' ')[0]}</strong> {item.recommendation.substring(item.recommendation.indexOf(' ') + 1)}
+                      {item.recommendation}
                     </p>
                   )}
                 </div>
