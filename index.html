@@ -36,6 +36,15 @@
       background: #D4AF37; /* Gold */
     }
 
+    /* Hide scrollbar for horizontal navigation */
+    .scrollbar-hide {
+      -ms-overflow-style: none;  /* Internet Explorer 10+ */
+      scrollbar-width: none;  /* Firefox */
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;  /* Safari and Chrome */
+    }
+
     /* Tailwind prose styles for pre > code and strong tags */
     .prose pre {
         background-color: #1f2937 !important; /* Dark background for code blocks */

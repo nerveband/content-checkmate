@@ -1029,14 +1029,20 @@ const App: React.FC = () => {
         // If they need to be reset on tab switch, do it explicitly or manage separate state per tab.
         onClick(tabId);
       }}
-      className={`flex items-center justify-center px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black
+      className={`flex items-center justify-center px-2 sm:px-4 py-2.5 sm:py-3 font-medium text-xs sm:text-sm rounded-t-lg transition-all duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black whitespace-nowrap min-w-0 flex-shrink-0
         ${currentTab === tabId 
           ? 'bg-neutral-800 text-yellow-400 border-b-2 border-yellow-400' 
           : 'text-neutral-400 hover:bg-neutral-700/50 hover:text-yellow-300'
         }`}
     >
-      {icon && <span className="mr-2 h-5 w-5">{icon}</span>}
-      {children}
+      {icon && <span className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0">{icon}</span>}
+      <span className="hidden sm:inline truncate">{children}</span>
+      <span className="sm:hidden text-xs" title={children as string}>
+        {tabId === 'mediaAndText' ? 'M&T' : 
+         tabId === 'textOnly' ? 'Text' : 
+         tabId === 'policyGuide' ? 'Guide' : 
+         tabId === 'imageEditor' ? 'Edit' : children}
+      </span>
     </button>
   );
   
@@ -1098,12 +1104,12 @@ const App: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-black text-neutral-100 p-4 sm:p-8 flex flex-col items-center">
-      <header className="w-full max-w-5xl mb-6 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 mb-2">
+    <div className="min-h-screen bg-black text-neutral-100 p-2 sm:p-4 lg:p-8 flex flex-col items-center">
+      <header className="w-full max-w-5xl mb-4 sm:mb-6 text-center px-2">
+        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 mb-2 leading-tight">
           Intuitive Solutions Content Policy Analyzer
         </h1>
-        <p className="text-neutral-400 text-base sm:text-lg">
+        <p className="text-neutral-400 text-sm sm:text-base lg:text-lg px-2">
           {getHeaderSubtitle()}
         </p>
          {currentApiKeyStatus === 'none' && analysisError && analysisError.includes("API Key is not configured") && (
@@ -1251,8 +1257,8 @@ const App: React.FC = () => {
 
 
       <main className="w-full max-w-5xl bg-neutral-900 shadow-2xl shadow-yellow-500/10 rounded-xl">
-        <div role="tablist" aria-label="Analysis Mode" className="flex justify-between items-center border-b border-neutral-700/80 px-2 sm:px-4">
-          <div className="flex">
+        <div role="tablist" aria-label="Analysis Mode" className="flex justify-between items-center border-b border-neutral-700/80 px-1 sm:px-4">
+          <div className="flex flex-1 overflow-x-auto scrollbar-hide">
             <TabButton tabId="mediaAndText" currentTab={activeTab} onClick={setActiveTab} icon={<PhotoIcon />}>Media & Text</TabButton>
             <TabButton tabId="textOnly" currentTab={activeTab} onClick={setActiveTab} icon={<ChatBubbleBottomCenterTextIcon />}>Text Only</TabButton>
             <TabButton tabId="policyGuide" currentTab={activeTab} onClick={setActiveTab} icon={<ClipboardDocumentListIcon />}>Policy Guide</TabButton>
@@ -1260,7 +1266,7 @@ const App: React.FC = () => {
           </div>
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="p-2 text-neutral-400 hover:text-yellow-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-full"
+            className="flex-shrink-0 p-1.5 sm:p-2 ml-1 sm:ml-2 text-neutral-400 hover:text-yellow-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-full"
             aria-label="Open Settings"
             title="Open Settings"
           >
@@ -1268,7 +1274,7 @@ const App: React.FC = () => {
           </button>
         </div>
 
-        <div className="p-6 sm:p-8">
+        <div className="p-3 sm:p-6 lg:p-8">
           {activeTab === 'mediaAndText' && (
             <div role="tabpanel" id="mediaAndText-panel" aria-labelledby="mediaAndText-tab">
               <FileUpload onFileSelect={handleFileSelect} disabled={formInputsDisabled} />
