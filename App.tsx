@@ -1463,7 +1463,7 @@ const App: React.FC = () => {
                       </div>
                       {fileType === 'video' && (
                           <p className="text-xs text-neutral-500 mt-1">
-                              Previewing first frame. Full video content will be analyzed.
+                              Previewing first frame. Full video and audio content will be analyzed.
                           </p>
                       )}
                        {(fileType === 'image' && (drawableIssuesMap.size > 0 || drawableExcludedMap.size > 0)) && (
@@ -1700,7 +1700,7 @@ const App: React.FC = () => {
               <p className="mt-4 text-lg text-neutral-300">
                 Analyzing content... This may take a moment. ({elapsedTime}s)
               </p>
-               {fileType === 'video' && <p className="text-sm text-neutral-400 mt-1">Analyzing full video. Larger videos may take longer.</p>}
+               {fileType === 'video' && <p className="text-sm text-neutral-400 mt-1">Analyzing video and audio content. Larger videos may take longer.</p>}
             </div>
           )}
 

@@ -348,7 +348,7 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                         <MarkdownRenderer text={item.identifiedContent} />
                         {item.captionText && (
                           <div className="mt-1 text-xs text-neutral-400 bg-neutral-700/50 px-2 py-1 rounded">
-                            <strong>Caption:</strong> {item.captionText}
+                            <strong>Caption/Audio:</strong> {item.captionText}
                           </div>
                         )}
                       </td>
@@ -537,7 +537,7 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                         <MarkdownRenderer text={item.identifiedContent} />
                         {item.captionText && (
                           <div className="mt-1 text-xs text-neutral-400 bg-neutral-700/50 px-2 py-1 rounded">
-                            <strong>Caption:</strong> {item.captionText}
+                            <strong>Caption/Audio:</strong> {item.captionText}
                           </div>
                         )}
                       </td>

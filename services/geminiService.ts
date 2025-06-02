@@ -16,7 +16,7 @@ const generatePrompt = (
 ): string => {
   let mediaSection = "";
   if (isVideo) {
-    mediaSection = "1.  Media: A video file. The entire video content will be analyzed with timestamp-based flagging for specific moments and on-screen text/captions.";
+    mediaSection = "1.  Media: A video file. The entire video content will be analyzed including BOTH video and audio components with timestamp-based flagging for specific moments, on-screen text/captions, spoken dialogue, background music, sound effects, and any other audio content.";
   } else if (hasDescription || hasCta) { 
      mediaSection = "1.  Media: An image file.";
   } else if (!isVideo && !hasDescription && !hasCta) { 
@@ -103,7 +103,7 @@ Based on ALL provided materials (media, if any, AND any accompanying text) that 
     - "sourceContext": A string indicating the origin of the content. Use ONE of: 'primaryImage', 'videoFrame', 'descriptionText', 'ctaText'.
     - "identifiedContent": Specific words, phrases, or visual elements. 
         - If sourceContext is 'primaryImage': "Visual (Image): [description of visual element or **text content of overlay** with **bolded keywords**]"
-        - If sourceContext is 'videoFrame': "Visual (Video): [description of issue found in video at specific timestamp, including any on-screen text/captions, with **bolded keywords**]"
+        - If sourceContext is 'videoFrame': "Video/Audio: [description of issue found in video AND/OR audio at specific timestamp, including visual content, on-screen text/captions, spoken dialogue, music, sound effects, or any audio content, with **bolded keywords**]"
         - If sourceContext is 'descriptionText': "Text (Description): '[**problematic phrase**]'"
         - If sourceContext is 'ctaText': "Text (CTA): '[**problematic phrase**]'"
     - "issueDescription": SUCCINCTLY explain why this content is an issue according to the policy guide. KEEP THIS **VERY BRIEF AND SIMPLE**.
@@ -111,7 +111,7 @@ Based on ALL provided materials (media, if any, AND any accompanying text) that 
     - "severity": Assign a severity level to EACH issue, using ONE of the following exact string values: 'Low', 'Medium', 'High'.
     - "boundingBox": Optional. If "sourceContext" is 'primaryImage' AND the issue pertains to a specific, locatable visual element in THE UPLOADED IMAGE, provide **a single object** with normalized bounding box coordinates: { "x_min": number, "y_min": number, "x_max": number, "y_max": number }. Coordinates must be between 0.0 and 1.0. (0,0) is top-left. If not applicable for 'primaryImage' or for any other sourceContext, omit or set to null.
     - "timestamp": Optional. If "sourceContext" is 'videoFrame', provide the timestamp in seconds where the issue occurs (e.g., 23.5 for 23.5 seconds into the video). If not applicable, omit or set to null.
-    - "captionText": Optional. If "sourceContext" is 'videoFrame' and there is on-screen text/captions at the timestamp, provide the exact text content. If no captions or not applicable, omit or set to null.
+    - "captionText": Optional. If "sourceContext" is 'videoFrame' and there is on-screen text/captions OR relevant spoken dialogue/audio content at the timestamp, provide the exact text/transcription. If no captions or audio content or not applicable, omit or set to null.
     - If no issues are found in content NOT matching exclusion rules, "issuesTable" MUST be an empty array.
 
 **Output Format:**
@@ -158,7 +158,8 @@ Important:
 - Ensure all string values for "overallSeverity", "issuesTable.severity", "issuesTable.sourceContext", "excludedItemsTable.sourceContext" strictly adhere to the specified categories.
 - "boundingBox" should only be a single object or null for 'primaryImage' issues where it's relevant and locatable. For 'videoFrame' issues, it should generally be null.
 - "timestamp" should be provided for 'videoFrame' issues with the exact time in seconds where the problem occurs.
-- "captionText" should contain any on-screen text visible at the timestamp for 'videoFrame' issues.
+- "captionText" should contain any on-screen text visible at the timestamp OR spoken dialogue/audio transcription for 'videoFrame' issues.
+- For video analysis, ensure you examine BOTH visual content (scenes, actions, text overlays) AND audio content (speech, music, sound effects) comprehensively.
 - For all text fields, prioritize **brevity, clarity, and simple language**.
 `;
 }
