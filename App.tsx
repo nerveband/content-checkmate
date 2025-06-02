@@ -929,6 +929,9 @@ const App: React.FC = () => {
     setCurrentFixedImage(null);
     setCurrentFixPrompt('');
     setIsFixGenerationModalOpen(true);
+    
+    // Set default model to "max" for comprehensive fixes
+    setSelectedFluxModel('flux-kontext-max');
 
     try {
       // Generate comprehensive fix prompt using Gemini

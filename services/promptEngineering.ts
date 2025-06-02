@@ -1,6 +1,39 @@
 import { GoogleGenAI } from '@google/genai';
 import type { AnalysisTableItem } from '../types';
 
+async function retryApiCall<T>(
+  apiCall: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> {
+  let lastError: any;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await apiCall();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Check if it's a 503 overloaded error
+      const isOverloadedError = error.message?.includes('503') || 
+                              error.message?.includes('overloaded') ||
+                              error.message?.includes('UNAVAILABLE');
+      
+      if (isOverloadedError && attempt < maxRetries) {
+        const delay = initialDelay * Math.pow(2, attempt); // Exponential backoff
+        console.log(`Model overloaded, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries + 1})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      // If it's not a retryable error or we've exhausted retries, throw
+      throw error;
+    }
+  }
+  
+  throw lastError;
+}
+
 export async function generateFixPrompt(
   genAIClient: GoogleGenAI,
   issue: AnalysisTableItem
@@ -43,21 +76,23 @@ Examples:
 Your strategic editing instruction:`;
 
   try {
-    const response = await genAIClient.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: { parts: [{ text: prompt }] },
-      config: {
-        temperature: 0.1,
-        topP: 0.8,
-        topK: 30,
+    const fixPrompt = await retryApiCall(async () => {
+      const response = await genAIClient.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: { parts: [{ text: prompt }] },
+        config: {
+          temperature: 0.1,
+          topP: 0.8,
+          topK: 30,
+        }
+      });
+      
+      const result = response.text.trim();
+      if (!result) {
+        throw new Error('No fix prompt generated');
       }
+      return result;
     });
-    
-    const fixPrompt = response.text.trim();
-    
-    if (!fixPrompt) {
-      throw new Error('No fix prompt generated');
-    }
 
     return fixPrompt;
   } catch (error: any) {
@@ -105,21 +140,23 @@ Example: "Transform the controversial symbol in the center into a modern geometr
 Your comprehensive strategic editing instruction:`;
 
   try {
-    const response = await genAIClient.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: { parts: [{ text: prompt }] },
-      config: {
-        temperature: 0.1,
-        topP: 0.8,
-        topK: 30,
+    const fixPrompt = await retryApiCall(async () => {
+      const response = await genAIClient.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: { parts: [{ text: prompt }] },
+        config: {
+          temperature: 0.1,
+          topP: 0.8,
+          topK: 30,
+        }
+      });
+      
+      const result = response.text.trim();
+      if (!result) {
+        throw new Error('No comprehensive fix prompt generated');
       }
+      return result;
     });
-    
-    const fixPrompt = response.text.trim();
-    
-    if (!fixPrompt) {
-      throw new Error('No comprehensive fix prompt generated');
-    }
 
     return fixPrompt;
   } catch (error: any) {
