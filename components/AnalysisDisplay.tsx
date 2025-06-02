@@ -183,17 +183,31 @@ const TimestampButton: React.FC<{
   timestamp: number; 
   onJump: (timestamp: number) => void;
   className?: string;
-}> = ({ timestamp, onJump, className = "" }) => (
-  <button
-    onClick={() => onJump(timestamp)}
-    className={`inline-flex items-center px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded transition-colors duration-200 ${className}`}
-    aria-label={`Jump to ${formatTimestamp(timestamp)}`}
-    title={`Click to jump to ${formatTimestamp(timestamp)} in video`}
-  >
-    <ClockIcon className="w-3 h-3 mr-1" />
-    {formatTimestamp(timestamp)}
-  </button>
-);
+}> = ({ timestamp, onJump, className = "" }) => {
+  const [isClicked, setIsClicked] = useState(false);
+  
+  const handleClick = () => {
+    setIsClicked(true);
+    onJump(timestamp);
+    setTimeout(() => setIsClicked(false), 1000);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className={`inline-flex items-center px-2 py-1 ${
+        isClicked 
+          ? 'bg-green-600 text-white' 
+          : 'bg-blue-600 hover:bg-blue-500 text-white'
+      } text-xs font-medium rounded transition-all duration-200 ${className}`}
+      aria-label={`Jump to ${formatTimestamp(timestamp)}`}
+      title={`Click to jump to ${formatTimestamp(timestamp)} in video`}
+    >
+      <ClockIcon className="w-3 h-3 mr-1" />
+      {formatTimestamp(timestamp)}
+    </button>
+  );
+};
 
 export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ 
     result, 
