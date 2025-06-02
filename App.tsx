@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { FileUpload } from './components/FileUpload';
 import { AnalysisDisplay } from './components/AnalysisDisplay';
 import { analyzeContent } from './services/geminiService';
@@ -234,8 +234,24 @@ const App: React.FC = () => {
 
   // Video player ref for timestamp jumping
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoUrlRef = useRef<string | null>(null);
 
   const currentSelectedModelDetails = AVAILABLE_MODELS.find(m => m.id === selectedModel) || AVAILABLE_MODELS[0];
+
+  // Create stable video URL to prevent re-rendering
+  const videoUrl = useMemo(() => {
+    if (!uploadedFile || fileType !== 'video') return null;
+    
+    // Clean up previous URL
+    if (videoUrlRef.current) {
+      URL.revokeObjectURL(videoUrlRef.current);
+    }
+    
+    // Create new URL and store reference
+    const url = URL.createObjectURL(uploadedFile);
+    videoUrlRef.current = url;
+    return url;
+  }, [uploadedFile, fileType]);
 
   const getEffectiveApiKey = useCallback((): { key: string | null, source: 'custom' | 'built-in' | 'none' } => {
     const customKey = localStorage.getItem('customGeminiApiKey');
@@ -354,6 +370,12 @@ const App: React.FC = () => {
   }, [isLoadingImageGeneration, imageGenTimer]);
 
   const resetFileState = (clearAlsoMediaText: boolean = false) => {
+    // Clean up video URL if it exists
+    if (videoUrlRef.current) {
+      URL.revokeObjectURL(videoUrlRef.current);
+      videoUrlRef.current = null;
+    }
+    
     setUploadedFile(null);
     setFilePreview(null);
     setFileType(null);
@@ -511,6 +533,16 @@ const App: React.FC = () => {
       document.removeEventListener('paste', handlePaste);
     };
   }, [handleFileSelect, isLoadingAnalysis, isProcessingPreview, activeTab]);
+
+  // Cleanup video URL on unmount
+  useEffect(() => {
+    return () => {
+      if (videoUrlRef.current) {
+        URL.revokeObjectURL(videoUrlRef.current);
+        videoUrlRef.current = null;
+      }
+    };
+  }, []);
 
 
   const handleAnalyze = useCallback(async () => {
@@ -936,15 +968,9 @@ const App: React.FC = () => {
   }, []);
 
   const handleTimestampJump = useCallback((timestamp: number) => {
-    console.log('Timestamp jump requested:', timestamp);
-    
-    if (!videoRef.current) {
-      console.error('Video ref not available');
-      return;
-    }
+    if (!videoRef.current) return;
 
     const video = videoRef.current;
-    console.log('Video element found, ready state:', video.readyState, 'current time:', video.currentTime);
     
     // Scroll video into view
     video.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -952,30 +978,27 @@ const App: React.FC = () => {
     const jumpToTimestamp = () => {
       try {
         video.currentTime = timestamp;
-        console.log('Set video time to:', timestamp);
         
         // Wait a moment for the time to be set, then play
         setTimeout(() => {
-          video.play()
-            .then(() => {
-              console.log('Video playing from timestamp:', timestamp);
-            })
-            .catch((error) => {
-              console.error('Error playing video:', error);
-              // Try without autoplay
-              video.currentTime = timestamp;
-            });
+          video.play().catch(() => {
+            // Fallback: just set timestamp without autoplay
+            video.currentTime = timestamp;
+          });
         }, 100);
       } catch (error) {
-        console.error('Error setting video timestamp:', error);
+        // Silent fallback
+        try {
+          video.currentTime = timestamp;
+        } catch (e) {
+          // Ignore errors
+        }
       }
     };
 
     // If video metadata is not loaded, wait for it
     if (video.readyState < 1) {
-      console.log('Video not ready, waiting for metadata...');
       video.addEventListener('loadedmetadata', jumpToTimestamp, { once: true });
-      // Also try to load if it's not loading
       video.load();
     } else {
       jumpToTimestamp();
@@ -1438,20 +1461,20 @@ const App: React.FC = () => {
                           )}
                         </div>
                       )}
-                      {fileType === 'video' && uploadedFile && (
+                      {fileType === 'video' && videoUrl && (
                         <div className="w-full max-w-md mx-auto">
                           <video 
                             ref={videoRef}
-                            key={uploadedFile.name} // Ensure stable ref when file changes
-                            src={URL.createObjectURL(uploadedFile)}
+                            key={uploadedFile?.name || 'video'} // Ensure stable ref when file changes
+                            src={videoUrl}
                             controls
                             preload="metadata"
                             className="w-full rounded-lg shadow-lg border-2 border-neutral-700"
                             onLoadedMetadata={() => {
-                              console.log('Video metadata loaded, ready for timestamp jumping');
+                              // Video ready for timestamp jumping
                             }}
-                            onError={(e) => {
-                              console.error('Video loading error:', e);
+                            onError={() => {
+                              // Handle video loading errors silently
                             }}
                           />
                         </div>
