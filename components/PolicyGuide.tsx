@@ -288,25 +288,42 @@ const PolicyGuide: React.FC = () => {
                 aria-label="Search banned and restricted words"
               />
             </div>
-            <p className="text-xs text-neutral-400 mb-3">Displaying {filteredWords.length} of {bannedWords.length} keywords. Severity: {severityIconsLucide.high} High, {severityIconsLucide.medium} Medium, {severityIconsLucide.low} Low.</p>
+            <p className="text-xs text-neutral-400 mb-3">Displaying {filteredWords.length} of {bannedWords.length} keywords. Severity levels: <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs">High</span>, <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-xs">Medium</span>, <span className="bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs">Low</span>.</p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-              {filteredWords.map((item, index) => (
-                <div 
-                  key={index} 
-                  className="flex flex-col p-3 rounded-md border bg-neutral-700/50 text-neutral-300 border-neutral-500"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium">{item.word}</span>
-                    <span className="ml-2 flex-shrink-0">{severityIconsLucide[item.severity as keyof typeof severityIconsLucide]}</span>
+              {filteredWords.map((item, index) => {
+                const getSeverityPillStyle = (severity: string) => {
+                  switch (severity) {
+                    case 'high':
+                      return 'bg-red-600 text-white';
+                    case 'medium':
+                      return 'bg-orange-500 text-white';
+                    case 'low':
+                      return 'bg-yellow-500 text-black';
+                    default:
+                      return 'bg-neutral-500 text-white';
+                  }
+                };
+
+                return (
+                  <div 
+                    key={index} 
+                    className="flex flex-col p-3 rounded-md border bg-neutral-700/50 text-neutral-300 border-neutral-500"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">{item.word}</span>
+                      <span className={`ml-2 flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full capitalize ${getSeverityPillStyle(item.severity)}`}>
+                        {item.severity}
+                      </span>
+                    </div>
+                    {item.recommendation && (
+                      <p className="text-xs text-neutral-300/80 mt-1 leading-tight">
+                        {item.recommendation}
+                      </p>
+                    )}
                   </div>
-                  {item.recommendation && (
-                    <p className="text-xs text-neutral-300/80 mt-1 leading-tight">
-                      {item.recommendation}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
             
             {filteredWords.length === 0 && (
