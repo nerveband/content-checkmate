@@ -1106,9 +1106,16 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-neutral-100 p-2 sm:p-4 lg:p-8 flex flex-col items-center">
       <header className="w-full max-w-5xl mb-4 sm:mb-6 text-center px-2">
-        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 mb-2 leading-tight">
-          Intuitive Solutions Content Policy Analyzer
-        </h1>
+        <div className="flex flex-col items-center mb-4">
+          <img 
+            src="/intuitive-solutions-logo.png" 
+            alt="Intuitive Solutions" 
+            className="h-12 sm:h-16 lg:h-20 w-auto mb-3 object-contain"
+          />
+          <h1 className="text-xl sm:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 leading-tight">
+            Content Policy Analyzer
+          </h1>
+        </div>
         <p className="text-neutral-400 text-sm sm:text-base lg:text-lg px-2">
           {getHeaderSubtitle()}
         </p>
@@ -1772,8 +1779,7 @@ const App: React.FC = () => {
       />
 
       <footer className="w-full max-w-5xl mt-12 text-center text-neutral-500 text-sm">
-        <p>&copy; {new Date().getFullYear()} Intuitive Solutions Content Policy Analyzer.</p>
-         <p className="text-xs mt-1">Note: For videos, analysis is based on the full video content and any accompanying text.</p>
+        <p>&copy; {new Date().getFullYear()} Intuitive Solutions. All rights reserved.</p>
       </footer>
     </div>
   );
