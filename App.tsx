@@ -232,8 +232,8 @@ const App: React.FC = () => {
   const [currentTargetIssue, setCurrentTargetIssue] = useState<AnalysisTableItem | null>(null);
   const [isAllIssuesFix, setIsAllIssuesFix] = useState<boolean>(false);
 
-  // Video player state
-  const [videoPlayerTimestamp, setVideoPlayerTimestamp] = useState<number | undefined>(undefined);
+  // Video player ref for timestamp jumping
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const currentSelectedModelDetails = AVAILABLE_MODELS.find(m => m.id === selectedModel) || AVAILABLE_MODELS[0];
 
@@ -936,9 +936,10 @@ const App: React.FC = () => {
   }, []);
 
   const handleTimestampJump = useCallback((timestamp: number) => {
-    setVideoPlayerTimestamp(timestamp);
-    // Trigger a re-render to jump to timestamp
-    setTimeout(() => setVideoPlayerTimestamp(undefined), 100);
+    if (videoRef.current) {
+      videoRef.current.currentTime = timestamp;
+      videoRef.current.play().catch(console.error);
+    }
   }, []);
 
 
@@ -1400,14 +1401,10 @@ const App: React.FC = () => {
                       {fileType === 'video' && uploadedFile && (
                         <div className="w-full max-w-md mx-auto">
                           <video 
+                            ref={videoRef}
                             src={URL.createObjectURL(uploadedFile)}
                             controls
                             className="w-full rounded-lg shadow-lg border-2 border-neutral-700"
-                            onTimeUpdate={(e) => {
-                              if (videoPlayerTimestamp !== undefined) {
-                                e.currentTarget.currentTime = videoPlayerTimestamp;
-                              }
-                            }}
                           />
                         </div>
                       )}
