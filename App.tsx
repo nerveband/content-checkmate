@@ -11,6 +11,7 @@ import {
   ChatBubbleBottomCenterTextIcon, ClipboardDocumentListIcon, XCircleIcon, CogIcon, Trash2Icon, AdjustmentsHorizontalIcon, SparklesIcon
 } from './components/icons';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
+import { Tooltip } from './components/Tooltip';
 import { GoogleGenAI } from '@google/genai';
 import { ExclusionRulesInputs } from './components/ExclusionRulesInputs';
 import { ImageEditorForm } from './components/ImageEditorForm';
