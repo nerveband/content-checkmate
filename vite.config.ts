@@ -1,39 +1,9 @@
-import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    return {
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.REPLICATE_API_TOKEN': JSON.stringify(env.REPLICATE_API_TOKEN),
-        'process.env.ENABLE_IMAGE_EDITING': JSON.stringify(env.ENABLE_IMAGE_EDITING)
-      },
-      resolve: {
-        alias: {
-          '@': path.resolve(__dirname, '.'),
-        }
-      },
-      server: {
-        proxy: {
-          '/api': {
-            target: 'http://localhost:3001',
-            changeOrigin: true,
-            configure: (proxy, options) => {
-              // Fallback for when Vercel dev is not running
-              proxy.on('error', (err, req, res) => {
-                console.warn('API proxy error - make sure to run "npm run dev:vercel" in another terminal');
-                res.writeHead(503, {
-                  'Content-Type': 'application/json',
-                });
-                res.end(JSON.stringify({
-                  error: 'API server not available. Run "npm run dev:vercel" in another terminal for full functionality.'
-                }));
-              });
-            }
-          }
-        }
-      }
-    };
+export default defineConfig({
+  plugins: [sveltekit()],
+  optimizeDeps: {
+    exclude: ['@google/genai']
+  }
 });
