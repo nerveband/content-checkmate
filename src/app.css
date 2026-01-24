@@ -26,6 +26,16 @@
     --color-negative-light: 254 226 226;
     --color-warning: 245 158 11;
     --color-warning-light: 254 243 199;
+
+    /* Border Radius - Change all to non-zero values for rounded design */
+    --radius-none: 0px;
+    --radius-sm: 0px;   /* 0.25rem for rounded */
+    --radius-md: 0px;   /* 0.375rem for rounded */
+    --radius-lg: 0px;   /* 0.5rem for rounded */
+    --radius-xl: 0px;   /* 0.75rem for rounded */
+    --radius-2xl: 0px;  /* 1rem for rounded */
+    --radius-3xl: 0px;  /* 1.5rem for rounded */
+    --radius-full: 9999px; /* Keep for circular elements */
   }
 
   html {
@@ -45,11 +55,13 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100 rounded;
+    @apply bg-gray-100;
+    border-radius: var(--radius-md);
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded hover:bg-gray-400 transition-colors;
+    @apply bg-gray-300 hover:bg-gray-400 transition-colors;
+    border-radius: var(--radius-md);
   }
 
   /* Focus styles */
@@ -61,7 +73,8 @@
 @layer components {
   /* Card styles */
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-card transition-all duration-200;
+    @apply bg-white border border-gray-200 shadow-card transition-all duration-200;
+    border-radius: var(--radius-xl);
   }
 
   .card:hover {
@@ -70,7 +83,8 @@
 
   /* Button base */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    border-radius: var(--radius-lg);
   }
 
   .btn-primary {
@@ -95,7 +109,8 @@
 
   /* Input styles */
   .input {
-    @apply w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 transition-all duration-200;
+    @apply w-full px-4 py-3 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 transition-all duration-200;
+    border-radius: var(--radius-lg);
   }
 
   .input:focus {
@@ -108,7 +123,8 @@
 
   /* Badge styles */
   .badge {
-    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+    @apply inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium;
+    border-radius: var(--radius-full);
   }
 
   .badge-high {
@@ -137,12 +153,14 @@
   }
 
   .tab-indicator {
-    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full;
+    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-accent;
+    border-radius: var(--radius-full);
   }
 
   /* File drop zone */
   .drop-zone {
-    @apply relative border-2 border-dashed border-gray-300 rounded-xl p-8 text-center transition-all duration-200 cursor-pointer;
+    @apply relative border-2 border-dashed border-gray-300 p-8 text-center transition-all duration-200 cursor-pointer;
+    border-radius: var(--radius-xl);
   }
 
   .drop-zone:hover {

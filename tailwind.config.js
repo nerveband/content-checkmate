@@ -3,6 +3,17 @@ export default {
   content: ['./src/**/*.{html,js,svelte,ts}'],
   theme: {
     extend: {
+      borderRadius: {
+        'none': '0',
+        'sm': 'var(--radius-sm)',
+        'DEFAULT': 'var(--radius-md)',
+        'md': 'var(--radius-md)',
+        'lg': 'var(--radius-lg)',
+        'xl': 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+        '3xl': 'var(--radius-3xl)',
+        'full': 'var(--radius-full)',
+      },
       colors: {
         surface: {
           primary: '#FAFAFA',
