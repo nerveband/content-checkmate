@@ -2,6 +2,16 @@
 
 AI-powered content policy analyzer for Meta advertising compliance. Analyze your content before you publish to catch policy violations and get actionable recommendations.
 
+## Demo
+
+<p align="center">
+  <img src="promo-preview.gif" alt="Content Checkmate Demo" width="640">
+</p>
+
+<p align="center">
+  <a href="promo.mp4">📺 Watch Full Demo Video</a>
+</p>
+
 ## Features
 
 ### Content Analysis
