@@ -6,7 +6,7 @@ import { describeLocation } from '$lib/utils/boundingBox';
 
 // Model constants
 export const ANALYSIS_MODEL = 'gemini-3-flash-preview';
-export const IMAGE_GEN_MODEL = 'imagen-3.0-generate-001';
+export const IMAGE_GEN_MODEL = 'imagen-3.0-fast-generate-001';
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -309,7 +309,7 @@ Your editing instruction:`;
 
 /**
  * Generates an image using Gemini's image generation model (Nano Banana Pro)
- * Uses imagen-3.0-generate-001 for high-quality image generation
+ * Uses imagen-3.0-fast-generate-001 for fast, high-quality image generation
  *
  * @param base64Image - Base64 image data (with or without data URL prefix) for image-to-image editing
  * @param prompt - Text prompt describing the desired image or edit instructions
@@ -355,7 +355,7 @@ export async function generateImage(
 
     // Generate image using Gemini's image generation model
     const response = await genAIClient.models.generateContent({
-      model: IMAGE_GEN_MODEL, // imagen-3.0-generate-001
+      model: IMAGE_GEN_MODEL, // imagen-3.0-fast-generate-001
       contents: { parts },
       config: {
         temperature: 0.4,
