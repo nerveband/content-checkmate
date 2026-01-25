@@ -23,7 +23,7 @@
   </div>
 
   <!-- Predefined Tags -->
-  <div class="grid grid-cols-2 gap-2">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
     {#each PREDEFINED_EXCLUSION_TAGS as tag}
       <Checkbox
         checked={analysisStore.selectedExclusionTags.includes(tag.id)}
