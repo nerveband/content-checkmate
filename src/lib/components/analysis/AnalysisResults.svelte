@@ -97,7 +97,7 @@
   </Card>
 
   <!-- Image Preview with Bounding Boxes -->
-  {#if analysisStore.uploadedFilePreview && !analysisStore.isVideo && result.issuesTable.some(i => i.boundingBox)}
+  {#if analysisStore.uploadedFilePreview && result.issuesTable.some(i => i.boundingBox)}
     <Card>
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-semibold text-gray-900">Image Preview</h3>
