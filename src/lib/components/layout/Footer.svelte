@@ -8,7 +8,7 @@
       <div class="flex items-center gap-2 text-sm text-gray-500">
         <span>&copy; {currentYear} Content Checkmate</span>
         <span class="hidden sm:inline">|</span>
-        <span class="hidden sm:inline">Powered by Gemini AI</span>
+        <a href="https://ashrafali.net" target="_blank" rel="noopener noreferrer" class="hidden sm:inline text-accent hover:underline">Made by Ashraf Ali</a>
       </div>
 
       <div class="flex items-center gap-4 text-sm text-gray-500">
