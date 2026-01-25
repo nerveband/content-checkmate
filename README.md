@@ -4,15 +4,7 @@ AI-powered content policy analyzer for Meta advertising compliance. Analyze your
 
 ## Demo
 
-<p align="center">
-  <a href="https://pub-52dceaca56c9403e8d827054a1e8050b.r2.dev/content-checkmate/promo.mp4">
-    <img src="promo-thumbnail.jpg" alt="Content Checkmate Demo - Click to Watch" width="640">
-  </a>
-</p>
-
-<p align="center">
-  <em>👆 Click the image above to watch the 30-second demo video</em>
-</p>
+https://github.com/nerveband/content-checkmate/releases/download/v1.0.0/promo.mp4
 
 ## Features
 
