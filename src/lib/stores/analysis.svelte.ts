@@ -1,4 +1,5 @@
 import type { AnalysisResult, ActiveTab } from '$lib/types';
+import { getImageDimensions } from '$lib/utils/fileUtils';
 
 function createAnalysisStore() {
   let activeTab = $state<ActiveTab>('mediaAndText');
@@ -12,6 +13,7 @@ function createAnalysisStore() {
   let uploadedFileBase64 = $state<string | null>(null);
   let uploadedFileMimeType = $state<string | null>(null);
   let isVideo = $state(false);
+  let imageDimensions = $state<{ width: number; height: number } | null>(null);
 
   // Text inputs
   let description = $state('');
@@ -71,6 +73,9 @@ function createAnalysisStore() {
     get isVideo() {
       return isVideo;
     },
+    get imageDimensions() {
+      return imageDimensions;
+    },
 
     // Text inputs
     get description() {
@@ -121,7 +126,7 @@ function createAnalysisStore() {
     },
 
     // Methods
-    setFile(file: File | null) {
+    async setFile(file: File | null) {
       uploadedFile = file;
       if (file) {
         isVideo = file.type.startsWith('video/');
@@ -129,6 +134,18 @@ function createAnalysisStore() {
 
         // Create preview URL
         uploadedFilePreview = URL.createObjectURL(file);
+
+        // Get image dimensions for images (not videos)
+        if (file.type.startsWith('image/')) {
+          try {
+            imageDimensions = await getImageDimensions(file);
+          } catch (err) {
+            console.error('Failed to get image dimensions:', err);
+            imageDimensions = null;
+          }
+        } else {
+          imageDimensions = null;
+        }
 
         // Read as base64
         const reader = new FileReader();
@@ -146,6 +163,7 @@ function createAnalysisStore() {
         uploadedFileBase64 = null;
         uploadedFileMimeType = null;
         isVideo = false;
+        imageDimensions = null;
       }
     },
 

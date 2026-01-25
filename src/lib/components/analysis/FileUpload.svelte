@@ -1,6 +1,6 @@
 <script lang="ts">
   import { analysisStore } from '$lib/stores/analysis.svelte';
-  import { formatFileSize, isValidMediaType } from '$lib/utils/fileUtils';
+  import { formatFileSize, isValidMediaType, getAspectRatio, getFileTypeLabel } from '$lib/utils/fileUtils';
   import Button from '$lib/components/ui/Button.svelte';
 
   let isDragging = $state(false);
@@ -111,11 +111,20 @@
         <!-- File Info -->
         <div class="flex-1 min-w-0">
           <p class="font-medium text-gray-900 truncate">{analysisStore.uploadedFile.name}</p>
-          <p class="text-sm text-gray-500 mt-1">
-            {formatFileSize(analysisStore.uploadedFile.size)}
-            <span class="mx-1.5">·</span>
-            {analysisStore.isVideo ? 'Video' : 'Image'}
-          </p>
+          <div class="text-sm text-gray-500 mt-1 space-y-0.5">
+            <p>
+              {formatFileSize(analysisStore.uploadedFile.size)}
+              <span class="mx-1.5">·</span>
+              {getFileTypeLabel(analysisStore.uploadedFile.type)}
+            </p>
+            {#if !analysisStore.isVideo && analysisStore.imageDimensions}
+              <p>
+                {analysisStore.imageDimensions.width} × {analysisStore.imageDimensions.height}
+                <span class="mx-1.5">·</span>
+                {getAspectRatio(analysisStore.imageDimensions.width, analysisStore.imageDimensions.height)}
+              </p>
+            {/if}
+          </div>
           <div class="flex items-center gap-2 mt-3">
             <Button variant="ghost" size="sm" onclick={clearFile}>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

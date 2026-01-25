@@ -2,7 +2,7 @@
   import { editorStore } from '$lib/stores/editor.svelte';
   import { settingsStore } from '$lib/stores/settings.svelte';
   import { generateImage, initializeClient, getClient } from '$lib/services/gemini';
-  import { generateId, downloadImage, formatFileSize, isValidImageType } from '$lib/utils/fileUtils';
+  import { generateId, downloadImage, formatFileSize, isValidImageType, getAspectRatio, getFileTypeLabel } from '$lib/utils/fileUtils';
   import Button from '$lib/components/ui/Button.svelte';
   import Textarea from '$lib/components/ui/Textarea.svelte';
   import Card from '$lib/components/ui/Card.svelte';
@@ -125,22 +125,42 @@
             <p class="text-sm text-gray-600">Drop an image to edit, or generate from scratch</p>
           </div>
         {:else}
-          <div class="relative group">
-            <img
-              src={editorStore.uploadedFilePreview}
-              alt="Source"
-              class="w-full rounded-lg"
-            />
-            <button
-              type="button"
-              class="absolute top-2 right-2 p-2 bg-white/90 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-              onclick={() => editorStore.clearFile()}
-              aria-label="Remove image"
-            >
-              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+          <div class="space-y-3">
+            <div class="relative group">
+              <img
+                src={editorStore.uploadedFilePreview}
+                alt="Source"
+                class="w-full rounded-lg"
+              />
+              <button
+                type="button"
+                class="absolute top-2 right-2 p-2 bg-white/90 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                onclick={() => editorStore.clearFile()}
+                aria-label="Remove image"
+              >
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {#if editorStore.uploadedFile}
+              <div class="text-sm text-gray-600 space-y-1 px-1">
+                <p class="font-medium text-gray-900 truncate">{editorStore.uploadedFile.name}</p>
+                <p>
+                  {formatFileSize(editorStore.uploadedFile.size)}
+                  <span class="mx-1.5">·</span>
+                  {getFileTypeLabel(editorStore.uploadedFile.type)}
+                </p>
+                {#if editorStore.imageDimensions}
+                  <p>
+                    {editorStore.imageDimensions.width} × {editorStore.imageDimensions.height}
+                    <span class="mx-1.5">·</span>
+                    {getAspectRatio(editorStore.imageDimensions.width, editorStore.imageDimensions.height)}
+                  </p>
+                {/if}
+              </div>
+            {/if}
           </div>
         {/if}
       </Card>

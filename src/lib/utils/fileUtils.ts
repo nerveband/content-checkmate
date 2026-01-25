@@ -54,3 +54,59 @@ export function downloadImage(dataUrl: string, filename: string): void {
 export function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text);
 }
+
+export async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.width, height: img.height });
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load image dimensions'));
+    };
+
+    img.src = url;
+  });
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+export function getAspectRatio(width: number, height: number): string {
+  const divisor = gcd(width, height);
+  const ratioW = width / divisor;
+  const ratioH = height / divisor;
+
+  // Common aspect ratios
+  if (ratioW === 16 && ratioH === 9) return '16:9';
+  if (ratioW === 4 && ratioH === 3) return '4:3';
+  if (ratioW === 1 && ratioH === 1) return '1:1';
+  if (ratioW === 3 && ratioH === 2) return '3:2';
+  if (ratioW === 21 && ratioH === 9) return '21:9';
+  if (ratioW === 9 && ratioH === 16) return '9:16';
+  if (ratioW === 3 && ratioH === 4) return '3:4';
+
+  // For non-standard ratios, return simplified ratio
+  return `${ratioW}:${ratioH}`;
+}
+
+export function getFileTypeLabel(mimeType: string): string {
+  const typeMap: Record<string, string> = {
+    'image/jpeg': 'JPEG',
+    'image/jpg': 'JPEG',
+    'image/png': 'PNG',
+    'image/gif': 'GIF',
+    'image/webp': 'WebP',
+    'video/mp4': 'MP4',
+    'video/webm': 'WebM',
+    'video/quicktime': 'MOV'
+  };
+
+  return typeMap[mimeType] || mimeType.split('/')[1]?.toUpperCase() || 'Unknown';
+}

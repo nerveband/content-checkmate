@@ -1,5 +1,6 @@
 import type { GeneratedImage } from '$lib/types';
 import { browser } from '$app/environment';
+import { getImageDimensions } from '$lib/utils/fileUtils';
 
 const HISTORY_KEY = 'content-checkmate-image-history';
 
@@ -7,6 +8,7 @@ function createEditorStore() {
   let uploadedFile = $state<File | null>(null);
   let uploadedFilePreview = $state<string | null>(null);
   let uploadedFileBase64 = $state<string | null>(null);
+  let imageDimensions = $state<{ width: number; height: number } | null>(null);
   let prompt = $state('');
   let isGenerating = $state(false);
   let generatedImage = $state<string | null>(null);
@@ -43,6 +45,9 @@ function createEditorStore() {
     get uploadedFileBase64() {
       return uploadedFileBase64;
     },
+    get imageDimensions() {
+      return imageDimensions;
+    },
     get prompt() {
       return prompt;
     },
@@ -71,10 +76,22 @@ function createEditorStore() {
       return history;
     },
 
-    setFile(file: File | null) {
+    async setFile(file: File | null) {
       uploadedFile = file;
       if (file) {
         uploadedFilePreview = URL.createObjectURL(file);
+
+        // Get image dimensions
+        if (file.type.startsWith('image/')) {
+          try {
+            imageDimensions = await getImageDimensions(file);
+          } catch (err) {
+            console.error('Failed to get image dimensions:', err);
+            imageDimensions = null;
+          }
+        } else {
+          imageDimensions = null;
+        }
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -88,6 +105,7 @@ function createEditorStore() {
         }
         uploadedFilePreview = null;
         uploadedFileBase64 = null;
+        imageDimensions = null;
       }
     },
 
