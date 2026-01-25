@@ -9,10 +9,6 @@ https://github.com/user-attachments/assets/8766073c-295e-4daa-867e-8516df948a0f
 
 ## Screenshots
 
-| Analysis Results | Issues Detail |
-|:---:|:---:|
-| ![Analysis Results](screenshots/screenshot-analysis-results.png) | ![Issues List](screenshots/screenshot-issues-list.png) |
-
 | Policy Guide | Image Editor |
 |:---:|:---:|
 | ![Policy Guide](screenshots/screenshot-policy-guide.png) | ![Image Editor](screenshots/screenshot-image-editor.png) |
