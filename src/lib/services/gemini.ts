@@ -1,6 +1,7 @@
 import { GoogleGenAI, type Part } from '@google/genai';
 import type { AnalysisResult, AnalysisTableItem, ExcludedItem } from '$lib/types';
 import { POLICY_GUIDE } from '$lib/data/policies';
+import { detectAIGeneration } from './aiDetection';
 
 // Model constants
 export const ANALYSIS_MODEL = 'gemini-3-flash-preview';
@@ -193,16 +194,33 @@ export async function analyzeContent(
   }
 
   try {
-    const response = await genAIClient.models.generateContent({
-      model: ANALYSIS_MODEL,
-      contents: { parts },
-      config: {
-        responseMimeType: 'application/json',
-        temperature: 0.1,
-        topP: 0.8,
-        topK: 30
-      }
-    });
+    // Determine if we should run AI detection (only for images, not videos or text-only)
+    const shouldRunAIDetection = hasMedia && mimeType && !isVideo && mimeType.startsWith('image/');
+
+    // Run policy analysis and AI detection in parallel (if applicable)
+    const [response, aiDetectionResult] = await Promise.all([
+      genAIClient.models.generateContent({
+        model: ANALYSIS_MODEL,
+        contents: { parts },
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
+          topP: 0.8,
+          topK: 30
+        }
+      }),
+      // Only run AI detection for images (not videos or text-only)
+      shouldRunAIDetection && base64MediaData
+        ? detectAIGeneration(base64MediaData, mimeType).catch(err => {
+            console.warn('AI detection failed, continuing with policy analysis:', err);
+            return null; // Don't fail entire analysis if AI detection fails
+          })
+        : Promise.resolve(null)
+    ]);
+
+    if (!response.text) {
+      throw new Error('Empty response from Gemini API');
+    }
 
     let jsonStr = response.text.trim();
     const fenceRegex = /^```(?:json)?\s*([\s\S]*?)\s*```$/s;
@@ -223,11 +241,18 @@ export async function analyzeContent(
       boundingBox: processBoundingBox(item)
     }));
 
-    return {
+    const result: AnalysisResult = {
       ...rawData,
       issuesTable: processedIssues,
       excludedItemsTable: processedExcluded
     };
+
+    // Add AI detection result if available
+    if (aiDetectionResult) {
+      result.aiDetection = aiDetectionResult;
+    }
+
+    return result;
   } catch (error: unknown) {
     const err = error as Error;
     console.error('Error calling Gemini API:', err);
@@ -273,6 +298,10 @@ Your editing instruction:`;
       topP: 0.8
     }
   });
+
+  if (!response.text) {
+    throw new Error('Empty response from Gemini API');
+  }
 
   return response.text.trim();
 }
