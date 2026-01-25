@@ -2,6 +2,10 @@ import { browser } from '$app/environment';
 
 const STORAGE_KEY = 'content-checkmate-settings';
 
+// Check for environment variable API key
+const ENV_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const HAS_ENV_API_KEY = ENV_API_KEY.length > 0;
+
 interface Settings {
   apiKey: string;
   useCustomApiKey: boolean;
@@ -9,9 +13,14 @@ interface Settings {
 
 function loadInitialSettings(): Settings {
   const defaults: Settings = {
-    apiKey: '',
+    apiKey: HAS_ENV_API_KEY ? ENV_API_KEY : '',
     useCustomApiKey: false
   };
+
+  // If we have an env API key, use it and skip localStorage
+  if (HAS_ENV_API_KEY) {
+    return defaults;
+  }
 
   if (browser) {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -54,6 +63,9 @@ function createSettingsStore() {
     },
     get hasValidApiKey() {
       return settings.apiKey.length > 0;
+    },
+    get isUsingEnvApiKey() {
+      return HAS_ENV_API_KEY;
     }
   };
 }

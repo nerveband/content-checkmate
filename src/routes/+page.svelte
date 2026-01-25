@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { analysisStore } from '$lib/stores/analysis.svelte';
   import { settingsStore } from '$lib/stores/settings.svelte';
   import { analyzeContent, initializeClient, getClient } from '$lib/services/gemini';
@@ -19,6 +20,13 @@
     { id: 'imageEditor', label: 'Image Editor' },
     { id: 'policyGuide', label: 'Policy Guide' }
   ];
+
+  // Auto-initialize Gemini client if env API key is set
+  onMount(() => {
+    if (settingsStore.isUsingEnvApiKey && !getClient()) {
+      initializeClient(settingsStore.apiKey);
+    }
+  });
 
   async function handleAnalyze() {
     if (!settingsStore.hasValidApiKey) {
