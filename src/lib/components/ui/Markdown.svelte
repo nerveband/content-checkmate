@@ -46,8 +46,8 @@
     text = text.replace(/^## (.*$)/gim, '<h2 class="heading-2">$1</h2>');
     text = text.replace(/^# (.*$)/gim, '<h1 class="heading-1">$1</h1>');
 
-    // 4. Bold - CRITICAL: Must render as font-weight: 700, NOT background color
-    text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>');
+    // 4. Bold - DISABLED: Keep asterisks visible instead of converting to bold
+    // text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>');
 
     // 5. Links
     text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="link" target="_blank" rel="noopener noreferrer">$1</a>');

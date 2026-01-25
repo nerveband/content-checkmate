@@ -50,6 +50,7 @@
     transition:scale={{ duration: 200, start: 0.95 }}
     role="dialog"
     aria-modal="true"
+    onclick={(e) => e.stopPropagation()}
   >
     {#if title}
       <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
