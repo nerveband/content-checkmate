@@ -27,14 +27,14 @@
     --color-warning: 245 158 11;
     --color-warning-light: 254 243 199;
 
-    /* Border Radius - Change all to non-zero values for rounded design */
+    /* Border Radius - Rounded design */
     --radius-none: 0px;
-    --radius-sm: 0px;   /* 0.25rem for rounded */
-    --radius-md: 0px;   /* 0.375rem for rounded */
-    --radius-lg: 0px;   /* 0.5rem for rounded */
-    --radius-xl: 0px;   /* 0.75rem for rounded */
-    --radius-2xl: 0px;  /* 1rem for rounded */
-    --radius-3xl: 0px;  /* 1.5rem for rounded */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --radius-3xl: 1.5rem;
     --radius-full: 9999px; /* Keep for circular elements */
   }
 
