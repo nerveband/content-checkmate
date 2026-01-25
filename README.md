@@ -5,11 +5,13 @@ AI-powered content policy analyzer for Meta advertising compliance. Analyze your
 ## Demo
 
 <p align="center">
-  <img src="promo-preview.gif" alt="Content Checkmate Demo" width="640">
+  <a href="https://pub-52dceaca56c9403e8d827054a1e8050b.r2.dev/content-checkmate/promo.mp4">
+    <img src="promo-thumbnail.jpg" alt="Content Checkmate Demo - Click to Watch" width="640">
+  </a>
 </p>
 
 <p align="center">
-  <a href="promo.mp4">📺 Watch Full Demo Video</a>
+  <em>👆 Click the image above to watch the 30-second demo video</em>
 </p>
 
 ## Features
