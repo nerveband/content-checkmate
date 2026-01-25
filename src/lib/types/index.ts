@@ -33,6 +33,12 @@ export interface ExcludedItem {
   captionText?: string;
 }
 
+export interface AIDetectionResult {
+  isAIGenerated: boolean;
+  confidence: number; // 0-100
+  reasoning: string;
+}
+
 export interface AnalysisResult {
   overallAssessment: string;
   recommendationsFeedback: string;
@@ -41,6 +47,7 @@ export interface AnalysisResult {
   excludedItemsTable?: ExcludedItem[];
   summaryForCopy?: string;
   suggestedFixes?: string;
+  aiDetection?: AIDetectionResult;
 }
 
 export type FileType = 'image' | 'video';
