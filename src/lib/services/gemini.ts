@@ -6,7 +6,7 @@ import { describeLocation } from '$lib/utils/boundingBox';
 
 // Model constants
 export const ANALYSIS_MODEL = 'gemini-3-flash-preview';
-export const IMAGE_GEN_MODEL = 'gemini-3-pro-image-preview';
+export const IMAGE_GEN_MODEL = 'imagen-3.0-generate-001';
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -309,17 +309,17 @@ Your editing instruction:`;
 
 /**
  * Generates an image using Gemini's image generation model (Nano Banana Pro)
- * Uses imagen-3.0-generate-001 (gemini-3-pro-image-preview) for high-quality image generation
+ * Uses imagen-3.0-generate-001 for high-quality image generation
  *
+ * @param base64Image - Base64 image data (with or without data URL prefix) for image-to-image editing
  * @param prompt - Text prompt describing the desired image or edit instructions
- * @param sourceImageBase64 - Optional base64 image data (with or without data URL prefix) for image-to-image editing
  * @param mimeType - MIME type of the source image (e.g., 'image/png', 'image/jpeg')
  * @returns Promise resolving to base64 data URL of the generated image
  */
 export async function generateImage(
+  base64Image: string,
   prompt: string,
-  sourceImageBase64?: string,
-  mimeType: string = 'image/png'
+  mimeType: string
 ): Promise<string> {
   if (!genAIClient) {
     throw new Error('Gemini API client not initialized. Please provide an API key.');
@@ -332,12 +332,12 @@ export async function generateImage(
   try {
     const parts: Part[] = [{ text: prompt }];
 
-    // Add source image if provided (for image editing/image-to-image generation)
-    if (sourceImageBase64 && sourceImageBase64.trim().length > 0) {
+    // Add source image (for image editing/image-to-image generation)
+    if (base64Image && base64Image.trim().length > 0) {
       // Remove data URL prefix if present (e.g., "data:image/png;base64,")
-      let base64Data = sourceImageBase64;
-      if (sourceImageBase64.includes(',')) {
-        base64Data = sourceImageBase64.split(',')[1];
+      let base64Data = base64Image;
+      if (base64Image.includes(',')) {
+        base64Data = base64Image.split(',')[1];
       }
 
       // Validate base64 data
@@ -355,7 +355,7 @@ export async function generateImage(
 
     // Generate image using Gemini's image generation model
     const response = await genAIClient.models.generateContent({
-      model: IMAGE_GEN_MODEL, // gemini-3-pro-image-preview
+      model: IMAGE_GEN_MODEL, // imagen-3.0-generate-001
       contents: { parts },
       config: {
         temperature: 0.4,

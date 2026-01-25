@@ -66,8 +66,8 @@
       const mimeType = editorStore.uploadedFile?.type || 'image/png';
 
       const result = await generateImage(
+        editorStore.uploadedFileBase64 || '',
         editorStore.prompt,
-        editorStore.uploadedFileBase64 || undefined,
         mimeType
       );
       editorStore.generatedImage = result;
