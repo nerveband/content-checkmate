@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { POLICY_CATEGORIES } from '$lib/data/policies';
+  import { POLICY_CATEGORIES, POLICY_GUIDE } from '$lib/data/policies';
   import Card from '$lib/components/ui/Card.svelte';
   import Input from '$lib/components/ui/Input.svelte';
+  import Markdown from '$lib/components/ui/Markdown.svelte';
 
   let searchQuery = $state('');
   let activeCategory = $state<string | null>(null);
@@ -237,11 +238,21 @@
     </Card>
   {:else if !activeCategory}
     <Card>
-      <div class="text-center py-8 text-gray-500">
+      <div class="text-center py-8">
         <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <p>Select a category above to view policy details</p>
+        <p class="text-gray-500 mb-4">Select a category above to view policy details</p>
+
+        <!-- Demo: Full Policy Guide with Markdown -->
+        <details class="mt-6 text-left">
+          <summary class="text-accent hover:text-accent-dark cursor-pointer font-medium">
+            View Full Policy Guide (Markdown Demo)
+          </summary>
+          <div class="mt-4 max-h-96 overflow-y-auto">
+            <Markdown content={POLICY_GUIDE} />
+          </div>
+        </details>
       </div>
     </Card>
   {/if}
