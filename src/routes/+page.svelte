@@ -3,7 +3,7 @@
   import { analysisStore } from '$lib/stores/analysis.svelte';
   import { settingsStore } from '$lib/stores/settings.svelte';
   import { analyzeContent, initializeClient, getClient } from '$lib/services/gemini';
-  import type { ActiveTab, AnalysisTableItem } from '$lib/types';
+  import type { ActiveTab } from '$lib/types';
   import Tabs from '$lib/components/ui/Tabs.svelte';
   import Card from '$lib/components/ui/Card.svelte';
   import Button from '$lib/components/ui/Button.svelte';
@@ -101,16 +101,6 @@
     } finally {
       analysisStore.isAnalyzing = false;
     }
-  }
-
-  function handleSuggestFix(item: AnalysisTableItem) {
-    // Switch to image editor with the fix prompt
-    analysisStore.activeTab = 'imageEditor';
-    // Could pre-populate the editor with fix prompt here
-  }
-
-  function handleSuggestAllFixes() {
-    analysisStore.activeTab = 'imageEditor';
   }
 
   function canAnalyze(): boolean {
@@ -221,11 +211,7 @@
       <!-- Results -->
       {#if analysisStore.analysisResult}
         <div class="mt-8">
-          <AnalysisResults
-            result={analysisStore.analysisResult}
-            onSuggestFix={handleSuggestFix}
-            onSuggestAllFixes={handleSuggestAllFixes}
-          />
+          <AnalysisResults result={analysisStore.analysisResult} />
         </div>
       {/if}
 

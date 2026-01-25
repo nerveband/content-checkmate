@@ -5,16 +5,16 @@
   import Button from '$lib/components/ui/Button.svelte';
   import ViolationCard from './ViolationCard.svelte';
   import BoundingBoxOverlay from './BoundingBoxOverlay.svelte';
+  import FixGenerationModal from './FixGenerationModal.svelte';
   import { copyToClipboard } from '$lib/utils/fileUtils';
   import { analysisStore } from '$lib/stores/analysis.svelte';
+  import { fixGenerationStore } from '$lib/stores/fixGeneration.svelte';
 
   interface Props {
     result: AnalysisResult;
-    onSuggestFix?: (item: AnalysisTableItem) => void;
-    onSuggestAllFixes?: () => void;
   }
 
-  let { result, onSuggestFix, onSuggestAllFixes }: Props = $props();
+  let { result }: Props = $props();
 
   let copiedSummary = $state(false);
   let copiedFixes = $state(false);
@@ -45,6 +45,23 @@
 </script>
 
 <div class="space-y-6 animate-fade-in">
+  <!-- AI Detection Badge -->
+  {#if result.aiDetection}
+    <Card>
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-semibold text-gray-900">AI Generation Detection</h3>
+          <p class="text-sm text-gray-600 mt-1">
+            {result.aiDetection.reasoning}
+          </p>
+        </div>
+        <Badge variant={result.aiDetection.confidence > 60 ? 'warning' : 'success'}>
+          {result.aiDetection.confidence}% AI Confidence
+        </Badge>
+      </div>
+    </Card>
+  {/if}
+
   <!-- Overall Assessment Card -->
   <Card>
     <div class="flex items-start justify-between gap-4">
@@ -128,19 +145,23 @@
         <h3 class="font-display text-lg text-gray-900">
           Issues Found ({result.issuesTable.length})
         </h3>
-        {#if onSuggestAllFixes && result.issuesTable.length > 1}
-          <Button variant="primary" size="sm" onclick={onSuggestAllFixes}>
+        {#if result.issuesTable.length > 1}
+          <Button variant="primary" size="sm" onclick={() => fixGenerationStore.openModal(null, true)}>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Suggest All Fixes
+            Fix All Issues
           </Button>
         {/if}
       </div>
 
       <div class="space-y-3">
         {#each result.issuesTable as item, index}
-          <ViolationCard {item} {index} {onSuggestFix} />
+          <ViolationCard
+            {item}
+            {index}
+            onSuggestFix={() => fixGenerationStore.openModal(item, false)}
+          />
         {/each}
       </div>
     </div>
@@ -215,3 +236,6 @@
     {/if}
   </div>
 </div>
+
+<!-- Fix Generation Modal -->
+<FixGenerationModal />
