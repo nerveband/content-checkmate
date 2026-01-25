@@ -62,7 +62,14 @@
         initializeClient(settingsStore.apiKey);
       }
 
-      const result = await generateImage(editorStore.prompt, editorStore.uploadedFileBase64 || undefined);
+      // Get MIME type from uploaded file if available
+      const mimeType = editorStore.uploadedFile?.type || 'image/png';
+
+      const result = await generateImage(
+        editorStore.prompt,
+        editorStore.uploadedFileBase64 || undefined,
+        mimeType
+      );
       editorStore.generatedImage = result;
 
       // Add to history

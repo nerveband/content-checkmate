@@ -307,39 +307,105 @@ Your editing instruction:`;
   return response.text.trim();
 }
 
-export async function generateImage(prompt: string, sourceImageBase64?: string): Promise<string> {
+/**
+ * Generates an image using Gemini's image generation model (Nano Banana Pro)
+ * Uses imagen-3.0-generate-001 (gemini-3-pro-image-preview) for high-quality image generation
+ *
+ * @param prompt - Text prompt describing the desired image or edit instructions
+ * @param sourceImageBase64 - Optional base64 image data (with or without data URL prefix) for image-to-image editing
+ * @param mimeType - MIME type of the source image (e.g., 'image/png', 'image/jpeg')
+ * @returns Promise resolving to base64 data URL of the generated image
+ */
+export async function generateImage(
+  prompt: string,
+  sourceImageBase64?: string,
+  mimeType: string = 'image/png'
+): Promise<string> {
   if (!genAIClient) {
-    throw new Error('Gemini API client not initialized');
+    throw new Error('Gemini API client not initialized. Please provide an API key.');
   }
 
-  const parts: Part[] = [{ text: prompt }];
+  if (!prompt || prompt.trim().length === 0) {
+    throw new Error('Prompt is required for image generation');
+  }
 
-  if (sourceImageBase64) {
-    parts.push({
-      inlineData: {
-        mimeType: 'image/png',
-        data: sourceImageBase64
+  try {
+    const parts: Part[] = [{ text: prompt }];
+
+    // Add source image if provided (for image editing/image-to-image generation)
+    if (sourceImageBase64 && sourceImageBase64.trim().length > 0) {
+      // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+      let base64Data = sourceImageBase64;
+      if (sourceImageBase64.includes(',')) {
+        base64Data = sourceImageBase64.split(',')[1];
+      }
+
+      // Validate base64 data
+      if (!base64Data || base64Data.length === 0) {
+        throw new Error('Invalid source image data');
+      }
+
+      parts.push({
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data
+        }
+      });
+    }
+
+    // Generate image using Gemini's image generation model
+    const response = await genAIClient.models.generateContent({
+      model: IMAGE_GEN_MODEL, // gemini-3-pro-image-preview
+      contents: { parts },
+      config: {
+        temperature: 0.4,
+        topP: 0.9,
+        topK: 40,
+        responseModalities: ['IMAGE'] // Specify we want image output
       }
     });
-  }
 
-  const response = await genAIClient.models.generateContent({
-    model: IMAGE_GEN_MODEL,
-    contents: { parts },
-    config: {
-      temperature: 0.7
+    // Extract the generated image from the response
+    const candidate = response.candidates?.[0];
+    if (!candidate || !candidate.content || !candidate.content.parts) {
+      throw new Error('Invalid response structure from image generation API');
     }
-  });
 
-  // The response should contain an image - extract it
-  const candidate = response.candidates?.[0];
-  if (candidate?.content?.parts) {
+    // Find the image part in the response
     for (const part of candidate.content.parts) {
-      if ('inlineData' in part && part.inlineData) {
-        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      if ('inlineData' in part && part.inlineData && part.inlineData.data) {
+        const generatedMimeType = part.inlineData.mimeType || 'image/png';
+        return `data:${generatedMimeType};base64,${part.inlineData.data}`;
       }
     }
-  }
 
-  throw new Error('No image generated in response');
+    throw new Error('No image data found in response. The model may have returned only text.');
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error generating image:', err);
+
+    // Provide user-friendly error messages
+    if (err.message?.includes('API_KEY_INVALID') || err.message?.includes('API key not valid')) {
+      throw new Error('Invalid API key. Please check your Gemini API key.');
+    }
+    if (err.message?.includes('quota')) {
+      throw new Error('API quota exceeded. Please try again later.');
+    }
+    if (err.message?.includes('payload size exceeds') || err.message?.includes('too large')) {
+      throw new Error('Image too large. Please use a smaller image.');
+    }
+    if (err.message?.includes('safety')) {
+      throw new Error('Image generation blocked due to safety settings. Please try a different prompt or image.');
+    }
+
+    // Re-throw with context if it's already a formatted error
+    if (err.message?.includes('Gemini API') ||
+        err.message?.includes('Invalid') ||
+        err.message?.includes('required')) {
+      throw err;
+    }
+
+    // Generic error fallback
+    throw new Error(`Failed to generate image: ${err.message || 'Unknown error'}`);
+  }
 }
