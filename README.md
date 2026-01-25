@@ -4,7 +4,7 @@ AI-powered content policy analyzer for Meta advertising compliance. Analyze your
 
 ## Demo
 
-https://raw.githubusercontent.com/nerveband/content-checkmate/main/promo-video/out/promo.mp4
+https://github.com/nerveband/content-checkmate/blob/main/promo-video/out/promo.mp4
 
 ## Features
 
