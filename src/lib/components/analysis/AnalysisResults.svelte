@@ -4,7 +4,9 @@
   import Badge from '$lib/components/ui/Badge.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import ViolationCard from './ViolationCard.svelte';
+  import BoundingBoxOverlay from './BoundingBoxOverlay.svelte';
   import { copyToClipboard } from '$lib/utils/fileUtils';
+  import { analysisStore } from '$lib/stores/analysis.svelte';
 
   interface Props {
     result: AnalysisResult;
@@ -16,6 +18,7 @@
 
   let copiedSummary = $state(false);
   let copiedFixes = $state(false);
+  let highlightedIssueId = $state<string | null>(null);
 
   const severityVariant = {
     'High Risk': 'high',
@@ -92,6 +95,31 @@
       </div>
     {/if}
   </Card>
+
+  <!-- Image Preview with Bounding Boxes -->
+  {#if analysisStore.uploadedFilePreview && !analysisStore.isVideo && result.issuesTable.some(i => i.boundingBox)}
+    <Card>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-900">Image Preview</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onclick={() => analysisStore.showBoundingBoxes = !analysisStore.showBoundingBoxes}
+        >
+          {analysisStore.showBoundingBoxes ? 'Hide' : 'Show'} Bounding Boxes
+        </Button>
+      </div>
+      <div class="flex justify-center">
+        <BoundingBoxOverlay
+          imageUrl={analysisStore.uploadedFilePreview}
+          issues={result.issuesTable}
+          visible={analysisStore.showBoundingBoxes}
+          {highlightedIssueId}
+          onIssueClick={(id) => highlightedIssueId = id}
+        />
+      </div>
+    </Card>
+  {/if}
 
   <!-- Issues -->
   {#if result.issuesTable && result.issuesTable.length > 0}

@@ -23,6 +23,9 @@ function createAnalysisStore() {
   let customExclusions = $state('');
   let isSiepNotApplicable = $state(false);
 
+  // Bounding boxes
+  let showBoundingBoxes = $state(true);
+
   return {
     // Tab management
     get activeTab() {
@@ -107,6 +110,14 @@ function createAnalysisStore() {
     },
     set isSiepNotApplicable(value: boolean) {
       isSiepNotApplicable = value;
+    },
+
+    // Bounding boxes
+    get showBoundingBoxes() {
+      return showBoundingBoxes;
+    },
+    set showBoundingBoxes(value: boolean) {
+      showBoundingBoxes = value;
     },
 
     // Methods
