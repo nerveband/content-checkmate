@@ -11,7 +11,6 @@
    * - Lists (unordered)
    * - Code blocks (inline and multiline)
    * - Links
-   * - Paragraphs with proper spacing
    */
 
   interface Props {
@@ -59,18 +58,6 @@
     // 7. Wrap consecutive list items in <ul>
     text = text.replace(/(<li class="list-item">.*<\/li>\n?)+/g, '<ul class="list">$&</ul>');
 
-    // 8. Paragraphs - split by double newlines
-    const paragraphs = text.split(/\n\n+/);
-    text = paragraphs
-      .map(p => {
-        // Don't wrap if already wrapped in a block element
-        if (p.match(/^<(h[123]|ul|pre|div)/)) {
-          return p;
-        }
-        return `<p class="paragraph">${p.replace(/\n/g, '<br />')}</p>`;
-      })
-      .join('\n');
-
     return text;
   }
 
@@ -105,15 +92,6 @@
   .markdown :global(strong) {
     font-weight: 700;
     color: rgb(17 24 39); /* gray-900 */
-  }
-
-  /* Paragraphs */
-  .markdown :global(.paragraph) {
-    @apply text-gray-700 mb-3 leading-relaxed;
-  }
-
-  .markdown :global(.paragraph:last-child) {
-    @apply mb-0;
   }
 
   /* Lists */
