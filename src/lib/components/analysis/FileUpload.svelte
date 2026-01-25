@@ -4,7 +4,7 @@
   import Button from '$lib/components/ui/Button.svelte';
 
   let isDragging = $state(false);
-  let fileInputRef: HTMLInputElement;
+  let fileInputRef = $state<HTMLInputElement>();
 
   function handleDragOver(e: DragEvent) {
     e.preventDefault();

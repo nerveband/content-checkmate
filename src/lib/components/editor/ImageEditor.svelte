@@ -8,7 +8,7 @@
   import Card from '$lib/components/ui/Card.svelte';
 
   let isDragging = $state(false);
-  let fileInputRef: HTMLInputElement;
+  let fileInputRef = $state<HTMLInputElement>();
 
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
