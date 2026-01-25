@@ -2,6 +2,7 @@ import { GoogleGenAI, type Part } from '@google/genai';
 import type { AnalysisResult, AnalysisTableItem, ExcludedItem } from '$lib/types';
 import { POLICY_GUIDE } from '$lib/data/policies';
 import { detectAIGeneration } from './aiDetection';
+import { describeLocation } from '$lib/utils/boundingBox';
 
 // Model constants
 export const ANALYSIS_MODEL = 'gemini-3-flash-preview';
@@ -341,29 +342,4 @@ export async function generateImage(prompt: string, sourceImageBase64?: string):
   }
 
   throw new Error('No image generated in response');
-}
-
-function describeLocation(boundingBox: { x_min: number; y_min: number; x_max: number; y_max: number }): string {
-  const centerX = (boundingBox.x_min + boundingBox.x_max) / 2;
-  const centerY = (boundingBox.y_min + boundingBox.y_max) / 2;
-
-  let vertical = '';
-  let horizontal = '';
-
-  if (centerY < 0.33) vertical = 'top';
-  else if (centerY > 0.67) vertical = 'bottom';
-  else vertical = 'center';
-
-  if (centerX < 0.33) horizontal = 'left';
-  else if (centerX > 0.67) horizontal = 'right';
-  else horizontal = 'center';
-
-  if (vertical === 'center' && horizontal === 'center') {
-    return 'center of the image';
-  } else if (vertical === 'center') {
-    return `${horizontal} side of the image`;
-  } else if (horizontal === 'center') {
-    return `${vertical} of the image`;
-  }
-  return `${vertical}-${horizontal} corner of the image`;
 }
