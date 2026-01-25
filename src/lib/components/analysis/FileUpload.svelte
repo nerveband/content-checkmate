@@ -88,7 +88,7 @@
       {/if}
     </div>
   {:else}
-    <!-- File Preview -->
+    <!-- File Preview - Simple Thumbnail -->
     <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
       <div class="flex items-start gap-4">
         <!-- Preview Thumbnail -->

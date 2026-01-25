@@ -93,15 +93,26 @@ ${exclusionPromptPart}
 2. Assign "overallSeverity": 'Compliant' | 'Low Risk' | 'Medium Risk' | 'High Risk'.
 3. Provide "recommendationsFeedback" (succinct, actionable).
 4. Generate "issuesTable" array with objects containing:
-   - "id": string
+   - "id": string (unique identifier like "issue-1", "issue-2", etc.)
    - "sourceContext": 'primaryImage' | 'videoFrame' | 'descriptionText' | 'ctaText'
    - "identifiedContent": string
    - "issueDescription": string (brief)
    - "recommendation": string (actionable)
    - "severity": 'High' | 'Medium' | 'Low'
-   - "boundingBox": { x_min, y_min, x_max, y_max } | null
-   - "timestamp": number | null (for video)
+   - "boundingBox": For image/video issues, provide the bounding box coordinates. Use NORMALIZED coordinates where (0,0) is top-left and (1,1) is bottom-right. Format: { "x_min": 0.0-1.0, "y_min": 0.0-1.0, "x_max": 0.0-1.0, "y_max": 0.0-1.0 }. Set to null for text-only issues.
+   - "timestamp": number | null (for video, in seconds)
    - "captionText": string | null
+
+**CRITICAL - Bounding Box Instructions:**
+For ANY policy violation visible in the image, you MUST provide accurate bounding box coordinates that visually locate the problematic content. This includes:
+- Visual elements (people, products, objects, symbols, gestures)
+- Text visible IN the image (overlays, captions, watermarks, logos, headlines, body copy)
+- Any graphical elements that violate policy
+
+Use your spatial understanding to identify exactly where in the image each violation appears. The coordinates must be normalized (0-1 scale) where (0,0) is top-left and (1,1) is bottom-right.
+
+ALWAYS provide bounding boxes for anything visible in the image. Only set boundingBox to null for issues found in the user-provided description/CTA text fields (not visible in the image itself).
+
 5. Generate "excludedItemsTable" for content matching exclusion rules.
 6. Generate "summaryForCopy" - plain language summary for designers.
 7. Generate "suggestedFixes" - specific actionable suggestions.

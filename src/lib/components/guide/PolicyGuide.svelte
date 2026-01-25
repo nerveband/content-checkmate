@@ -1,7 +1,7 @@
 <script lang="ts">
   import { POLICY_CATEGORIES, POLICY_GUIDE } from '$lib/data/policies';
   import Card from '$lib/components/ui/Card.svelte';
-  import Markdown from '$lib/components/ui/Markdown.svelte';
+  import PolicyContent from './PolicyContent.svelte';
   import { onMount } from 'svelte';
 
   let searchQuery = $state('');
@@ -130,7 +130,40 @@
 <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-12rem)]">
   <!-- Left Sidebar - Sticky Navigation (25%) -->
   <aside class="lg:w-1/4 flex-shrink-0">
-    <div class="lg:sticky lg:top-4 lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto">
+    <div class="lg:sticky lg:top-4 lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto space-y-4">
+      <!-- Search Box -->
+      <Card>
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            bind:value={searchQuery}
+            placeholder="Search policies..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent text-sm"
+            style="border-radius: var(--radius-md)"
+          />
+          {#if searchQuery}
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              onclick={() => searchQuery = ''}
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          {/if}
+        </div>
+        {#if searchQuery.trim()}
+          <p class="text-xs text-gray-500 mt-2">
+            {filteredSections().length} result{filteredSections().length !== 1 ? 's' : ''} found
+          </p>
+        {/if}
+      </Card>
+
+      <!-- Policy Sections Navigation -->
       <Card>
         <h3 class="font-semibold text-gray-900 mb-4">Policy Sections</h3>
 
@@ -158,70 +191,44 @@
   <!-- Right Content Area (75%) -->
   <main class="flex-1 overflow-auto" bind:this={contentContainer}>
     <Card>
-      <div class="prose prose-sm max-w-none">
-        {#if searchQuery.trim()}
-          <div class="mb-6 p-4 bg-accent-light/30 border-l-4 border-accent">
-            <p class="text-sm text-gray-900">
-              Search results for: <strong class="font-semibold">"{searchQuery}"</strong>
-            </p>
-            <p class="text-xs text-gray-600 mt-1">
-              Found {filteredSections().length} matching section{filteredSections().length !== 1 ? 's' : ''}
-            </p>
-          </div>
+      {#if searchQuery.trim()}
+        <div class="mb-6 p-4 bg-accent-light/30 rounded-lg border-l-4 border-accent">
+          <p class="text-sm text-gray-900">
+            Search results for: <strong class="font-semibold">"{searchQuery}"</strong>
+          </p>
+          <p class="text-xs text-gray-600 mt-1">
+            Found {filteredSections().length} matching section{filteredSections().length !== 1 ? 's' : ''}
+          </p>
+        </div>
 
-          {#if filteredSections().length === 0}
-            <div class="text-center py-12">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <p class="text-gray-500 mb-4">No matching policies found.</p>
-              <button
-                type="button"
-                class="text-accent hover:text-accent-dark underline text-sm"
-                onclick={() => searchQuery = ''}
-              >
-                Clear search
-              </button>
-            </div>
-          {:else}
-            {#each filteredSections() as section}
-              <div id="section-{section.id}" class="mb-8 scroll-mt-4">
-                <Markdown content={section.content} />
-              </div>
-            {/each}
-          {/if}
+        {#if filteredSections().length === 0}
+          <div class="text-center py-12">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <p class="text-gray-500 mb-4">No matching policies found.</p>
+            <button
+              type="button"
+              class="text-accent hover:text-accent-dark underline text-sm"
+              onclick={() => searchQuery = ''}
+            >
+              Clear search
+            </button>
+          </div>
         {:else}
-          {#each policySections() as section}
+          {#each filteredSections() as section}
             <div id="section-{section.id}" class="mb-8 scroll-mt-4">
-              <Markdown content={section.content} />
+              <PolicyContent content={section.content} {searchQuery} />
             </div>
           {/each}
         {/if}
-      </div>
+      {:else}
+        {#each policySections() as section}
+          <div id="section-{section.id}" class="mb-8 scroll-mt-4">
+            <PolicyContent content={section.content} />
+          </div>
+        {/each}
+      {/if}
     </Card>
-
-    <!-- Search Input - Mobile positioned at bottom, desktop at top -->
-    <div class="lg:hidden sticky bottom-4 mt-4">
-      <div class="bg-white p-4 shadow-elevated" style="border-radius: var(--radius-lg)">
-        <input
-          type="text"
-          bind:value={searchQuery}
-          placeholder="Search policies..."
-          class="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-          style="border-radius: var(--radius-md)"
-        />
-      </div>
-    </div>
   </main>
-
-  <!-- Desktop Search - positioned in top right -->
-  <div class="hidden lg:block fixed top-20 right-6 w-64 z-10">
-    <input
-      type="text"
-      bind:value={searchQuery}
-      placeholder="Search policies..."
-      class="w-full px-4 py-2 bg-white border border-gray-300 shadow-card focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-      style="border-radius: var(--radius-md)"
-    />
-  </div>
 </div>

@@ -36,9 +36,12 @@ function createFixGenerationStore() {
   }
 
   return {
-    // Getters (read-only properties)
+    // Getters + Setters
     get isModalOpen() {
       return isModalOpen;
+    },
+    set isModalOpen(value: boolean) {
+      isModalOpen = value;
     },
     get targetIssue() {
       return targetIssue;

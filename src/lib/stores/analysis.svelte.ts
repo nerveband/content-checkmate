@@ -64,6 +64,9 @@ function createAnalysisStore() {
     get uploadedFilePreview() {
       return uploadedFilePreview;
     },
+    set uploadedFilePreview(value: string | null) {
+      uploadedFilePreview = value;
+    },
     get uploadedFileBase64() {
       return uploadedFileBase64;
     },

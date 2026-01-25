@@ -7,6 +7,7 @@
   import BoundingBoxOverlay from './BoundingBoxOverlay.svelte';
   import FixGenerationModal from './FixGenerationModal.svelte';
   import { copyToClipboard } from '$lib/utils/fileUtils';
+  import { parseInlineMarkdown, parseMarkdown } from '$lib/utils/markdown';
   import { analysisStore } from '$lib/stores/analysis.svelte';
   import { fixGenerationStore } from '$lib/stores/fixGeneration.svelte';
 
@@ -52,7 +53,7 @@
         <div>
           <h3 class="font-semibold text-gray-900">AI Generation Detection</h3>
           <p class="text-sm text-gray-600 mt-1">
-            {result.aiDetection.reasoning}
+            {@html parseInlineMarkdown(result.aiDetection.reasoning)}
           </p>
         </div>
         <Badge variant={result.aiDetection.confidence > 60 ? 'warning' : 'success'}>
@@ -77,7 +78,7 @@
             </Badge>
           {/if}
         </div>
-        <p class="text-gray-700">{result.overallAssessment}</p>
+        <p class="text-gray-700">{@html parseInlineMarkdown(result.overallAssessment)}</p>
       </div>
 
       <!-- Score Indicator -->
@@ -108,13 +109,13 @@
     {#if result.recommendationsFeedback}
       <div class="mt-4 pt-4 border-t border-gray-100">
         <h4 class="text-sm font-medium text-gray-900 mb-2">Recommendations</h4>
-        <p class="text-sm text-gray-600">{result.recommendationsFeedback}</p>
+        <p class="text-sm text-gray-600">{@html parseInlineMarkdown(result.recommendationsFeedback)}</p>
       </div>
     {/if}
   </Card>
 
-  <!-- Image Preview with Bounding Boxes -->
-  {#if analysisStore.uploadedFilePreview && result.issuesTable.some(i => i.boundingBox)}
+  <!-- Image Preview with Bounding Boxes - Only for Media & Text tab -->
+  {#if analysisStore.activeTab === 'mediaAndText' && analysisStore.uploadedFilePreview && result.issuesTable.some(i => i.boundingBox)}
     <Card>
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-semibold text-gray-900">Image Preview</h3>
@@ -123,17 +124,25 @@
           size="sm"
           onclick={() => analysisStore.showBoundingBoxes = !analysisStore.showBoundingBoxes}
         >
-          {analysisStore.showBoundingBoxes ? 'Hide' : 'Show'} Bounding Boxes
+          {analysisStore.showBoundingBoxes ? 'Hide' : 'Show'} Issues
         </Button>
       </div>
       <div class="flex justify-center">
-        <BoundingBoxOverlay
-          imageUrl={analysisStore.uploadedFilePreview}
-          issues={result.issuesTable}
-          visible={analysisStore.showBoundingBoxes}
-          {highlightedIssueId}
-          onIssueClick={(id) => highlightedIssueId = id}
-        />
+        <div class="max-w-2xl w-full">
+          <BoundingBoxOverlay
+            imageUrl={analysisStore.uploadedFilePreview}
+            issues={result.issuesTable}
+            visible={analysisStore.showBoundingBoxes}
+            {highlightedIssueId}
+            onIssueClick={(id) => highlightedIssueId = id}
+          />
+          {#if analysisStore.showBoundingBoxes}
+            {@const issueCount = result.issuesTable.filter(i => i.boundingBox).length}
+            <p class="text-center text-sm text-gray-500 mt-3">
+              {issueCount} issue{issueCount !== 1 ? 's' : ''} highlighted - hover for details, click to jump to issue
+            </p>
+          {/if}
+        </div>
       </div>
     </Card>
   {/if}
@@ -183,8 +192,8 @@
             <div class="flex items-center gap-2 mb-1">
               <Badge variant="default">{item.matchedRule}</Badge>
             </div>
-            <p class="text-sm text-gray-700">{item.identifiedContent}</p>
-            <p class="text-xs text-gray-500 mt-1">{item.aiNote}</p>
+            <p class="text-sm text-gray-700">{@html parseInlineMarkdown(item.identifiedContent)}</p>
+            <p class="text-xs text-gray-500 mt-1">{@html parseInlineMarkdown(item.aiNote)}</p>
           </div>
         {/each}
       </div>
@@ -212,7 +221,7 @@
             {/if}
           </Button>
         </div>
-        <p class="text-sm text-gray-600 whitespace-pre-wrap">{result.summaryForCopy}</p>
+        <div class="text-sm text-gray-600 whitespace-pre-wrap">{@html parseMarkdown(result.summaryForCopy)}</div>
       </Card>
     {/if}
 
@@ -235,7 +244,7 @@
             {/if}
           </Button>
         </div>
-        <p class="text-sm text-gray-600 whitespace-pre-wrap">{result.suggestedFixes}</p>
+        <div class="text-sm text-gray-600 whitespace-pre-wrap">{@html parseMarkdown(result.suggestedFixes)}</div>
       </Card>
     {/if}
   </div>

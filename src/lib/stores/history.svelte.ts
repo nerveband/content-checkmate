@@ -68,18 +68,26 @@ function createHistoryStore() {
 
     clearAnalyses() {
       analyses = [];
-      saveHistory();
+      if (browser) {
+        const toSave: GlobalHistory = { analyses: [], generations };
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(toSave));
+      }
     },
 
     clearGenerations() {
       generations = [];
-      saveHistory();
+      if (browser) {
+        const toSave: GlobalHistory = { analyses, generations: [] };
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(toSave));
+      }
     },
 
     clearAll() {
       analyses = [];
       generations = [];
-      saveHistory();
+      if (browser) {
+        localStorage.removeItem(HISTORY_KEY);
+      }
     }
   };
 }

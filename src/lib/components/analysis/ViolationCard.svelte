@@ -2,6 +2,7 @@
   import type { AnalysisTableItem } from '$lib/types';
   import Badge from '$lib/components/ui/Badge.svelte';
   import Button from '$lib/components/ui/Button.svelte';
+  import { parseInlineMarkdown } from '$lib/utils/markdown';
 
   interface Props {
     item: AnalysisTableItem;
@@ -43,6 +44,7 @@
 <div
   class="bg-white rounded-xl border border-gray-200 shadow-card p-4 border-l-4 transition-all duration-200 hover:shadow-elevated animate-slide-up {getSeverityBorderClass(item.severity)} {isHighlighted ? 'ring-2 ring-accent shadow-elevated' : ''} {item.boundingBox && onHighlight ? 'cursor-pointer' : ''}"
   style="animation-delay: {index * 50}ms"
+  data-issue-id={item.id}
   onmouseenter={() => item.boundingBox && onHighlight?.(item.id)}
   onmouseleave={() => onHighlight?.('')}
   onclick={() => item.boundingBox && onHighlight?.(item.id)}
@@ -72,18 +74,18 @@
 
       <!-- Content -->
       <p class="text-sm text-gray-900 font-medium mb-1">
-        {@html item.identifiedContent}
+        {@html parseInlineMarkdown(item.identifiedContent)}
       </p>
 
       <!-- Issue Description -->
       <p class="text-sm text-gray-600 mb-2">
-        {item.issueDescription}
+        {@html parseInlineMarkdown(item.issueDescription)}
       </p>
 
       <!-- Recommendation -->
       <div class="bg-positive-light/50 rounded-lg px-3 py-2">
         <p class="text-sm text-positive-dark">
-          <span class="font-medium">Fix:</span> {item.recommendation}
+          <span class="font-medium">Fix:</span> {@html parseInlineMarkdown(item.recommendation)}
         </p>
       </div>
     </div>

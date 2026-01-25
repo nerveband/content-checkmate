@@ -38,8 +38,10 @@
     // Restore the analysis result
     analysisStore.analysisResult = entry.analysisResult;
 
-    // Note: Cannot restore the actual file, but show the preview
-    // In a real implementation, you'd need to store the base64 data
+    // Restore the file preview for bounding boxes display
+    if (entry.filePreview) {
+      analysisStore.uploadedFilePreview = entry.filePreview;
+    }
   }
 
   function handleLoadGeneration(entry: typeof historyStore.generations[0]) {

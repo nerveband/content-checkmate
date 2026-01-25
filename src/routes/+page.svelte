@@ -93,8 +93,9 @@
 
       analysisStore.analysisResult = result;
 
-      // Save to history if we have a file
-      if (analysisStore.uploadedFile && analysisStore.uploadedFilePreview) {
+      // Save to history if we have a file - use base64 data URL for persistence
+      if (analysisStore.uploadedFile && analysisStore.uploadedFileBase64 && analysisStore.uploadedFileMimeType) {
+        const dataUrl = `data:${analysisStore.uploadedFileMimeType};base64,${analysisStore.uploadedFileBase64}`;
         historyStore.addAnalysis({
           id: generateId(),
           timestamp: Date.now(),
@@ -103,7 +104,7 @@
             size: analysisStore.uploadedFile.size,
             type: analysisStore.uploadedFile.type
           },
-          filePreview: analysisStore.uploadedFilePreview,
+          filePreview: dataUrl,
           analysisResult: result,
           description: analysisStore.description,
           ctaText: analysisStore.ctaText,
