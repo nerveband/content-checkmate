@@ -1,6 +1,8 @@
 import { getClient } from './gemini';
 import type { AIDetectionResult } from '$lib/types';
 
+export const AI_DETECTION_MODEL = 'gemini-2.0-flash-exp';
+
 /**
  * Detects if an image appears to be AI-generated
  * Uses gemini-2.0-flash-exp for fast, cost-effective detection
@@ -17,6 +19,16 @@ export async function detectAIGeneration(
   const client = getClient();
   if (!client) {
     throw new Error('Gemini client not initialized. Please provide an API key.');
+  }
+
+  // Input validation
+  if (!base64Image || base64Image.trim().length === 0) {
+    throw new Error('base64Image parameter is required and cannot be empty');
+  }
+
+  const validImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+  if (!validImageTypes.includes(mimeType.toLowerCase())) {
+    throw new Error(`Invalid MIME type for AI detection: ${mimeType}. Only image formats supported.`);
   }
 
   const prompt = `Analyze this image and determine if it appears to be AI-generated.
@@ -54,7 +66,7 @@ Be specific about which indicators you observe.`;
       : base64Image;
 
     const response = await client.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: AI_DETECTION_MODEL,
       contents: {
         parts: [
           { text: prompt },
