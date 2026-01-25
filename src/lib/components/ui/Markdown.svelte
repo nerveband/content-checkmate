@@ -96,11 +96,13 @@
 
   /* Lists */
   .markdown :global(.list) {
-    @apply space-y-1 mb-3;
+    margin-bottom: 0.75rem;
   }
 
   .markdown :global(.list-item) {
-    @apply text-gray-700 ml-5;
+    color: rgb(55 65 81); /* gray-700 */
+    margin-left: 1.25rem;
+    margin-top: 0.25rem;
     list-style-type: disc;
   }
 
