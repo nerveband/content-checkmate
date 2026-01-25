@@ -7,9 +7,11 @@
     item: AnalysisTableItem;
     index: number;
     onSuggestFix?: (item: AnalysisTableItem) => void;
+    isHighlighted?: boolean;
+    onHighlight?: (id: string) => void;
   }
 
-  let { item, index, onSuggestFix }: Props = $props();
+  let { item, index, onSuggestFix, isHighlighted = false, onHighlight }: Props = $props();
 
   const severityVariant = {
     High: 'high',
@@ -39,8 +41,13 @@
 </script>
 
 <div
-  class="bg-white rounded-xl border border-gray-200 shadow-card p-4 border-l-4 transition-all duration-200 hover:shadow-elevated animate-slide-up {getSeverityBorderClass(item.severity)}"
+  class="bg-white rounded-xl border border-gray-200 shadow-card p-4 border-l-4 transition-all duration-200 hover:shadow-elevated animate-slide-up {getSeverityBorderClass(item.severity)} {isHighlighted ? 'ring-2 ring-accent shadow-elevated' : ''} {item.boundingBox && onHighlight ? 'cursor-pointer' : ''}"
   style="animation-delay: {index * 50}ms"
+  onmouseenter={() => item.boundingBox && onHighlight?.(item.id)}
+  onmouseleave={() => onHighlight?.('')}
+  onclick={() => item.boundingBox && onHighlight?.(item.id)}
+  role={item.boundingBox && onHighlight ? 'button' : undefined}
+  tabindex={item.boundingBox && onHighlight ? 0 : undefined}
 >
   <div class="flex items-start justify-between gap-4">
     <div class="flex-1 min-w-0">

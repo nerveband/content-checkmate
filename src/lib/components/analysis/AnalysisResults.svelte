@@ -163,6 +163,8 @@
             onSuggestFix={analysisStore.uploadedFilePreview && !analysisStore.isVideo
               ? (item) => fixGenerationStore.openModal(item, false)
               : undefined}
+            isHighlighted={highlightedIssueId === item.id}
+            onHighlight={(id) => highlightedIssueId = id}
           />
         {/each}
       </div>
