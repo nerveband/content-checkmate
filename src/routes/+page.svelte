@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import { analysisStore } from '$lib/stores/analysis.svelte';
   import { settingsStore } from '$lib/stores/settings.svelte';
+  import { historyStore } from '$lib/stores/history.svelte';
   import { analyzeContent, initializeClient, getClient } from '$lib/services/gemini';
+  import { generateId } from '$lib/utils/fileUtils';
   import type { ActiveTab } from '$lib/types';
   import Tabs from '$lib/components/ui/Tabs.svelte';
   import Card from '$lib/components/ui/Card.svelte';
@@ -13,6 +15,7 @@
   import AnalysisResults from '$lib/components/analysis/AnalysisResults.svelte';
   import ImageEditor from '$lib/components/editor/ImageEditor.svelte';
   import PolicyGuide from '$lib/components/guide/PolicyGuide.svelte';
+  import History from '$lib/components/history/History.svelte';
 
   // Timer state for analysis
   let analysisStartTime = $state<number | null>(null);
@@ -48,7 +51,8 @@
     { id: 'mediaAndText', label: 'Media & Text' },
     { id: 'textOnly', label: 'Text Only' },
     { id: 'imageEditor', label: 'Image Editor' },
-    { id: 'policyGuide', label: 'Policy Guide' }
+    { id: 'policyGuide', label: 'Policy Guide' },
+    { id: 'history', label: 'History' }
   ];
 
   // Auto-initialize Gemini client if env API key is set
@@ -88,6 +92,24 @@
       );
 
       analysisStore.analysisResult = result;
+
+      // Save to history if we have a file
+      if (analysisStore.uploadedFile && analysisStore.uploadedFilePreview) {
+        historyStore.addAnalysis({
+          id: generateId(),
+          timestamp: Date.now(),
+          uploadedFile: {
+            name: analysisStore.uploadedFile.name,
+            size: analysisStore.uploadedFile.size,
+            type: analysisStore.uploadedFile.type
+          },
+          filePreview: analysisStore.uploadedFilePreview,
+          analysisResult: result,
+          description: analysisStore.description,
+          ctaText: analysisStore.ctaText,
+          postIntent: analysisStore.postIntent
+        });
+      }
     } catch (err) {
       analysisStore.error = err instanceof Error ? err.message : 'Analysis failed';
     } finally {
@@ -314,6 +336,10 @@
     {:else if analysisStore.activeTab === 'policyGuide'}
       <!-- Policy Guide Tab -->
       <PolicyGuide />
+
+    {:else if analysisStore.activeTab === 'history'}
+      <!-- History Tab -->
+      <History />
     {/if}
   </div>
 </div>

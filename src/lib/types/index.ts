@@ -73,7 +73,31 @@ export interface GeneratedFixImage {
   timestamp: number;
 }
 
-export type ActiveTab = 'mediaAndText' | 'textOnly' | 'policyGuide' | 'imageEditor';
+export type ActiveTab = 'mediaAndText' | 'textOnly' | 'policyGuide' | 'imageEditor' | 'history';
+
+export interface AnalysisHistoryEntry {
+  id: string;
+  timestamp: number;
+  uploadedFile: {
+    name: string;
+    size: number;
+    type: string;
+  };
+  filePreview: string;
+  analysisResult: AnalysisResult;
+  description?: string;
+  ctaText?: string;
+  postIntent?: string;
+}
+
+export interface GenerationHistoryEntry {
+  id: string;
+  timestamp: number;
+  prompt: string;
+  imageUrl: string;
+  sourceType: 'editor' | 'fix';
+  sourceImageUrl?: string;
+}
 
 export interface AppState {
   activeTab: ActiveTab;

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { editorStore } from '$lib/stores/editor.svelte';
   import { settingsStore } from '$lib/stores/settings.svelte';
+  import { historyStore } from '$lib/stores/history.svelte';
   import { generateImage, initializeClient, getClient } from '$lib/services/gemini';
   import { generateId, downloadImage, formatFileSize, isValidImageType, getAspectRatio, getFileTypeLabel } from '$lib/utils/fileUtils';
   import Button from '$lib/components/ui/Button.svelte';
@@ -72,12 +73,22 @@
       );
       editorStore.generatedImage = result;
 
-      // Add to history
+      // Add to editor-specific history
       editorStore.addToHistory({
         id: generateId(),
         prompt: editorStore.prompt,
         imageUrl: result,
         timestamp: Date.now()
+      });
+
+      // Add to global history
+      historyStore.addGeneration({
+        id: generateId(),
+        timestamp: Date.now(),
+        prompt: editorStore.prompt,
+        imageUrl: result,
+        sourceType: 'editor',
+        sourceImageUrl: editorStore.uploadedFilePreview || undefined
       });
     } catch (err) {
       editorStore.error = err instanceof Error ? err.message : 'Failed to generate image';
