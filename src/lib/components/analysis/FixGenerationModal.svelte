@@ -9,11 +9,25 @@
   import Card from '$lib/components/ui/Card.svelte';
   import Textarea from '$lib/components/ui/Textarea.svelte';
 
+  // Constants
+  const TIMER_UPDATE_INTERVAL = 1000; // ms
+  const MAX_HISTORY_DISPLAY = 12;
+
   // Local state
   let editablePrompt = $state('');
   let generationStartTime = $state<number | null>(null);
   let elapsedSeconds = $state(0);
-  let timerInterval: number | undefined = $state(undefined);
+  let timerInterval = $state<ReturnType<typeof setInterval> | undefined>(undefined);
+
+  // Helper function to reset timer
+  function resetTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = undefined;
+    }
+    elapsedSeconds = 0;
+    generationStartTime = null;
+  }
 
   // Auto-generate prompt when modal opens (if not already generated)
   $effect(() => {
@@ -33,7 +47,7 @@
       // Start timer
       timerInterval = setInterval(() => {
         elapsedSeconds = Math.floor((Date.now() - generationStartTime!) / 1000);
-      }, 100) as unknown as number;
+      }, TIMER_UPDATE_INTERVAL);
 
       return () => {
         if (timerInterval) {
@@ -43,12 +57,7 @@
       };
     } else {
       // Clear timer when not generating
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = undefined;
-      }
-      elapsedSeconds = 0;
-      generationStartTime = null;
+      resetTimer();
     }
   });
 
@@ -95,6 +104,12 @@
 
     if (!analysisStore.uploadedFileBase64 || !analysisStore.uploadedFileMimeType) {
       fixGenerationStore.error = 'No source image available';
+      return;
+    }
+
+    // Validate that source is an image (videos not supported)
+    if (!analysisStore.uploadedFileMimeType.startsWith('image/')) {
+      fixGenerationStore.error = 'Source must be an image (videos not supported for fix generation)';
       return;
     }
 
@@ -149,12 +164,7 @@
 
   function handleClose() {
     editablePrompt = '';
-    generationStartTime = null;
-    elapsedSeconds = 0;
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = undefined;
-    }
+    resetTimer();
     fixGenerationStore.closeModal();
   }
 
@@ -299,9 +309,10 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {#each fixGenerationStore.fixHistory.slice(0, 12) as historyItem (historyItem.id)}
+          {#each fixGenerationStore.fixHistory.slice(0, MAX_HISTORY_DISPLAY) as historyItem (historyItem.id)}
             <button
               onclick={() => {
+                if (!historyItem.imageUrl || !historyItem.generatedPrompt) return;
                 fixGenerationStore.generatedImage = historyItem.imageUrl;
                 fixGenerationStore.generatedFixPrompt = historyItem.generatedPrompt;
                 editablePrompt = historyItem.generatedPrompt;
