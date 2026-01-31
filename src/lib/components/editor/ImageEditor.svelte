@@ -50,8 +50,8 @@
       return;
     }
 
-    if (!settingsStore.hasValidApiKey) {
-      editorStore.error = 'Please add your Gemini API key first';
+    if (!settingsStore.canAnalyze) {
+      editorStore.error = 'No checks remaining today. Add your own Gemini API key for unlimited usage.';
       return;
     }
 
@@ -59,7 +59,8 @@
     editorStore.error = null;
 
     try {
-      if (!getClient()) {
+      // Initialize client for own-key mode
+      if (settingsStore.hasValidApiKey && !getClient()) {
         initializeClient(settingsStore.apiKey);
       }
 
@@ -190,24 +191,22 @@
         {/if}
 
         <div class="mt-4">
-          {#if settingsStore.hasValidApiKey}
-            <Button
-              variant="primary"
-              loading={editorStore.isGenerating}
-              disabled={!editorStore.prompt.trim()}
-              onclick={handleGenerate}
-              class="w-full"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              {editorStore.isGenerating ? 'Generating...' : 'Generate Image'}
-            </Button>
-          {:else}
-            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-              <p class="text-sm text-gray-600">Requires your own API key</p>
-              <p class="text-xs text-gray-500 mt-1">Add your Gemini API key in the header to use image generation.</p>
-            </div>
+          <Button
+            variant="primary"
+            loading={editorStore.isGenerating}
+            disabled={!editorStore.prompt.trim() || !settingsStore.canAnalyze}
+            onclick={handleGenerate}
+            class="w-full"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            {editorStore.isGenerating ? 'Generating...' : 'Generate Image'}
+          </Button>
+          {#if settingsStore.isCommunityMode}
+            <p class="text-xs text-gray-500 mt-2 text-center">
+              {settingsStore.remainingChecks} of {settingsStore.checksLimit} free checks remaining today
+            </p>
           {/if}
         </div>
       </Card>

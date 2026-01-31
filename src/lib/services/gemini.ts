@@ -269,7 +269,38 @@ Your editing instruction:`;
   return response.text.trim();
 }
 
-export async function generateImage(
+/**
+ * Generate image via server proxy (community mode)
+ */
+async function generateImageViaProxy(
+  base64Image: string,
+  prompt: string,
+  mimeType: string
+): Promise<string> {
+  const res = await fetch('/api/generate-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base64Image, prompt, mimeType })
+  });
+
+  const data = await res.json();
+
+  // Update usage from response
+  if (data._usage) {
+    settingsStore.remainingChecks = data._usage.remaining;
+  }
+
+  if (!res.ok) {
+    throw new Error(data.error || 'Image generation failed');
+  }
+
+  return data.imageDataUrl;
+}
+
+/**
+ * Generate image directly via Gemini API (own-key mode)
+ */
+async function generateImageDirect(
   base64Image: string,
   prompt: string,
   mimeType: string
@@ -278,55 +309,70 @@ export async function generateImage(
     throw new Error('Gemini API client not initialized. Please provide an API key.');
   }
 
+  const parts: Part[] = [{ text: prompt }];
+
+  if (base64Image && base64Image.trim().length > 0) {
+    let base64Data = base64Image;
+    if (base64Image.includes(',')) {
+      base64Data = base64Image.split(',')[1];
+    }
+
+    if (!base64Data || base64Data.length === 0) {
+      throw new Error('Invalid source image data');
+    }
+
+    parts.push({
+      inlineData: {
+        mimeType: mimeType,
+        data: base64Data
+      }
+    });
+  }
+
+  const response = await genAIClient.models.generateContent({
+    model: IMAGE_GEN_MODEL,
+    contents: { parts },
+    config: {
+      temperature: 0.4,
+      topP: 0.9,
+      topK: 40,
+      responseModalities: ['IMAGE']
+    }
+  });
+
+  const candidate = response.candidates?.[0];
+  if (!candidate || !candidate.content || !candidate.content.parts) {
+    throw new Error('Invalid response structure from image generation API');
+  }
+
+  for (const part of candidate.content.parts) {
+    if ('inlineData' in part && part.inlineData && part.inlineData.data) {
+      const generatedMimeType = part.inlineData.mimeType || 'image/png';
+      return `data:${generatedMimeType};base64,${part.inlineData.data}`;
+    }
+  }
+
+  throw new Error('No image data found in response. The model may have returned only text.');
+}
+
+/**
+ * Main entry point for image generation: routes to proxy or direct based on settings mode
+ */
+export async function generateImage(
+  base64Image: string,
+  prompt: string,
+  mimeType: string
+): Promise<string> {
   if (!prompt || prompt.trim().length === 0) {
     throw new Error('Prompt is required for image generation');
   }
 
+  if (settingsStore.isCommunityMode) {
+    return generateImageViaProxy(base64Image, prompt, mimeType);
+  }
+
   try {
-    const parts: Part[] = [{ text: prompt }];
-
-    if (base64Image && base64Image.trim().length > 0) {
-      let base64Data = base64Image;
-      if (base64Image.includes(',')) {
-        base64Data = base64Image.split(',')[1];
-      }
-
-      if (!base64Data || base64Data.length === 0) {
-        throw new Error('Invalid source image data');
-      }
-
-      parts.push({
-        inlineData: {
-          mimeType: mimeType,
-          data: base64Data
-        }
-      });
-    }
-
-    const response = await genAIClient.models.generateContent({
-      model: IMAGE_GEN_MODEL,
-      contents: { parts },
-      config: {
-        temperature: 0.4,
-        topP: 0.9,
-        topK: 40,
-        responseModalities: ['IMAGE']
-      }
-    });
-
-    const candidate = response.candidates?.[0];
-    if (!candidate || !candidate.content || !candidate.content.parts) {
-      throw new Error('Invalid response structure from image generation API');
-    }
-
-    for (const part of candidate.content.parts) {
-      if ('inlineData' in part && part.inlineData && part.inlineData.data) {
-        const generatedMimeType = part.inlineData.mimeType || 'image/png';
-        return `data:${generatedMimeType};base64,${part.inlineData.data}`;
-      }
-    }
-
-    throw new Error('No image data found in response. The model may have returned only text.');
+    return await generateImageDirect(base64Image, prompt, mimeType);
   } catch (error: unknown) {
     const err = error as Error;
     console.error('Error generating image:', err);

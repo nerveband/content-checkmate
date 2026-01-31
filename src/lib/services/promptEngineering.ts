@@ -1,6 +1,7 @@
 import { getClient } from './gemini';
 import type { AnalysisTableItem } from '$lib/types';
 import { describeLocation } from '$lib/utils/boundingBox';
+import { settingsStore } from '$lib/stores/settings.svelte';
 
 /**
  * Retry helper with exponential backoff for 503 errors
@@ -43,10 +44,37 @@ async function retryApiCall<T>(
 }
 
 /**
+ * Generate fix prompt via server proxy (community mode)
+ */
+async function generateFixPromptViaProxy(issue: AnalysisTableItem): Promise<string> {
+  const res = await fetch('/api/generate-fix-prompt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issue })
+  });
+
+  const data = await res.json();
+
+  if (data._usage) {
+    settingsStore.remainingChecks = data._usage.remaining;
+  }
+
+  if (!res.ok) {
+    throw new Error(data.error || 'Fix prompt generation failed');
+  }
+
+  return data.prompt;
+}
+
+/**
  * Generates a fix prompt for a single policy violation
  * Uses gemini-2.0-flash-exp for fast, cost-effective prompt generation
  */
 export async function generateFixPrompt(issue: AnalysisTableItem): Promise<string> {
+  if (settingsStore.isCommunityMode) {
+    return generateFixPromptViaProxy(issue);
+  }
+
   const client = getClient();
   if (!client) {
     throw new Error('Gemini client not initialized');
@@ -113,12 +141,41 @@ Your strategic editing instruction (plain text, no JSON):`;
 }
 
 /**
+ * Generate comprehensive fix prompt via server proxy (community mode)
+ */
+async function generateComprehensiveFixPromptViaProxy(
+  issues: AnalysisTableItem[]
+): Promise<string> {
+  const res = await fetch('/api/generate-fix-prompt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issues, comprehensive: true })
+  });
+
+  const data = await res.json();
+
+  if (data._usage) {
+    settingsStore.remainingChecks = data._usage.remaining;
+  }
+
+  if (!res.ok) {
+    throw new Error(data.error || 'Comprehensive fix prompt generation failed');
+  }
+
+  return data.prompt;
+}
+
+/**
  * Generates a comprehensive fix prompt for multiple violations
  * Combines all issues into one strategic editing instruction
  */
 export async function generateComprehensiveFixPrompt(
   issues: AnalysisTableItem[]
 ): Promise<string> {
+  if (settingsStore.isCommunityMode) {
+    return generateComprehensiveFixPromptViaProxy(issues);
+  }
+
   const client = getClient();
   if (!client) {
     throw new Error('Gemini client not initialized');

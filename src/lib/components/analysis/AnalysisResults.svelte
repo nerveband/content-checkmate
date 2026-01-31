@@ -155,17 +155,13 @@
         <h3 class="font-display text-lg text-gray-900">
           Issues Found ({result.issuesTable.length})
         </h3>
-        {#if result.issuesTable.length > 1 && analysisStore.uploadedFilePreview}
-          {#if settingsStore.hasValidApiKey}
-            <Button variant="primary" size="sm" onclick={() => fixGenerationStore.openModal(null, true)}>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Fix All Issues
-            </Button>
-          {:else}
-            <span class="text-xs text-gray-500 italic">Add your API key to generate fixes</span>
-          {/if}
+        {#if result.issuesTable.length > 1 && analysisStore.uploadedFilePreview && settingsStore.canAnalyze}
+          <Button variant="primary" size="sm" onclick={() => fixGenerationStore.openModal(null, true)}>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Fix All Issues
+          </Button>
         {/if}
       </div>
 
@@ -174,7 +170,7 @@
           <ViolationCard
             {item}
             {index}
-            onSuggestFix={analysisStore.uploadedFilePreview && settingsStore.hasValidApiKey
+            onSuggestFix={analysisStore.uploadedFilePreview && settingsStore.canAnalyze
               ? (item) => fixGenerationStore.openModal(item, false)
               : undefined}
             isHighlighted={highlightedIssueId === item.id}
