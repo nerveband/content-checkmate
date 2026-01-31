@@ -34,7 +34,7 @@
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">
         <img src="/mascot.png" alt="Content Checkmate" class="h-8 sm:h-10 w-auto flex-shrink-0" />
         <div class="min-w-0">
-          <h1 class="font-display text-base sm:text-lg text-gray-900 truncate" style="letter-spacing: -0.3px;">Content Checkmate</h1>
+          <span class="font-display text-base sm:text-lg text-gray-900 truncate block" style="letter-spacing: -0.3px;">Content Checkmate</span>
           <p class="text-[10px] text-gray-400 font-medium tracking-widest uppercase hidden sm:block">AI Policy Analyzer</p>
         </div>
       </div>
