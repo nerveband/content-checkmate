@@ -23,29 +23,48 @@ interface KVStore {
   set(key: string, value: string): Promise<void>;
 }
 
+const memoryStore: KVStore = {
+  async get(key: string) { return devStore.get(key) ?? null; },
+  async set(key: string, value: string) { devStore.set(key, value); }
+};
+
+let resolvedStore: KVStore | null = null;
+let blobsFailed = false;
+
 function getKVStore(): KVStore {
-  if (dev) {
-    return {
-      async get(key: string) { return devStore.get(key) ?? null; },
-      async set(key: string, value: string) { devStore.set(key, value); }
-    };
+  if (dev || blobsFailed) {
+    return memoryStore;
   }
-  // In production on Netlify, dynamically import blobs
-  let netlifyStore: KVStore | null = null;
+  if (resolvedStore) {
+    return resolvedStore;
+  }
+  // Lazy-init wrapper that tries Netlify Blobs, falls back to in-memory
   return {
     async get(key: string) {
-      if (!netlifyStore) {
-        const { getStore } = await import('@netlify/blobs');
-        netlifyStore = getStore('rate-limits') as unknown as KVStore;
+      if (!resolvedStore) {
+        try {
+          const { getStore } = await import('@netlify/blobs');
+          resolvedStore = getStore('rate-limits') as unknown as KVStore;
+        } catch {
+          console.warn('Netlify Blobs unavailable, using in-memory rate limiting');
+          blobsFailed = true;
+          resolvedStore = memoryStore;
+        }
       }
-      return netlifyStore.get(key);
+      return resolvedStore!.get(key);
     },
     async set(key: string, value: string) {
-      if (!netlifyStore) {
-        const { getStore } = await import('@netlify/blobs');
-        netlifyStore = getStore('rate-limits') as unknown as KVStore;
+      if (!resolvedStore) {
+        try {
+          const { getStore } = await import('@netlify/blobs');
+          resolvedStore = getStore('rate-limits') as unknown as KVStore;
+        } catch {
+          console.warn('Netlify Blobs unavailable, using in-memory rate limiting');
+          blobsFailed = true;
+          resolvedStore = memoryStore;
+        }
       }
-      return netlifyStore.set(key, value);
+      return resolvedStore!.set(key, value);
     }
   };
 }
