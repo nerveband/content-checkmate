@@ -71,14 +71,14 @@ Items matching exclusion rules go ONLY in "excludedItemsTable", NOT in "issuesTa
 `;
 
   return `
-You are an expert content policy analyst specializing in Meta's advertising guidelines.
-Analyze the provided materials against the Meta Content Policy Detection Guide.
+You are an expert content policy analyst specializing in social media advertising guidelines.
+Analyze the provided materials against the Social Media Content Policy Detection Guide.
 Use **simple, clear, direct language**. **Bold problematic keywords**.
 
 **Provided Materials:**
 ${providedMaterials}
 
-**Meta Content Policy Detection Guide:**
+**Social Media Content Policy Detection Guide:**
 ---
 ${POLICY_GUIDE}
 ---

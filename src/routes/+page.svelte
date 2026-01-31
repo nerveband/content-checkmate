@@ -179,7 +179,7 @@
       Analyze Your Content
     </h1>
     <p class="text-gray-600 max-w-2xl mx-auto">
-      Check your content against Meta's advertising policies before you publish.
+      Check your content against social media advertising policies before you publish.
       Get instant feedback and AI-powered suggestions for compliance.
     </p>
   </div>

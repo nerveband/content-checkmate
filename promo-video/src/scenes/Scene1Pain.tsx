@@ -124,7 +124,7 @@ export const Scene1Pain: React.FC = () => {
         {/* Question text */}
         <Sequence from={fps * 2} durationInFrames={fps * 3} premountFor={fps} layout="none">
           <AnimatedText
-            text="Tired of guessing what Meta will approve?"
+            text="Tired of guessing what platforms will approve?"
             fontSize={28}
             color={colors.textSecondary}
             fontWeight={500}

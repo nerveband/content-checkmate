@@ -108,7 +108,7 @@ export const Scene7CTA: React.FC = () => {
             marginTop: 16,
           }}
         >
-          {["Meta Ads", "Instagram", "Facebook"].map((platform, i) => {
+          {["Social Ads", "Instagram", "Facebook"].map((platform, i) => {
             const badgeProgress = spring({
               frame: Math.max(0, frame - fps * 1.3 - i * 4),
               fps,

@@ -190,7 +190,7 @@ export const Scene6FeatureMontage: React.FC = () => {
       <Sequence from={fps * 2} durationInFrames={fps * 1.5} premountFor={fps} layout="none">
         <div style={{ opacity: exitOpacity, transform: `translateY(${exitY}px)` }}>
           <AnimatedText
-            text="Built for Meta advertisers"
+            text="Built for social media advertisers"
             fontSize={18}
             color={colors.textSecondary}
             fontWeight={500}

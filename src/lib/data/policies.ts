@@ -12,12 +12,12 @@ export const PREDEFINED_EXCLUSION_TAGS: PredefinedExclusionTag[] = [
 ];
 
 export const POLICY_GUIDE = `
-# Meta Content Policy Detection Guide
+# Social Media Content Policy Detection Guide
 
 ## Word-Level Restrictions
 
 ### Prohibited/High-Risk Words for Ads
-Based on Meta's advertising policies, flag these categories:
+Based on major social media advertising policies, flag these categories:
 
 **Personal Attributes (Banned from targeting)**
 - Race, ethnicity, religion, sexual orientation
@@ -224,7 +224,7 @@ Flag content that uses AI/digital manipulation for:
 - Cultural celebration content
 - Generic health information
 
-This framework should be regularly updated as Meta's policies evolve, with particular attention to election periods and emerging geopolitical conflicts.
+This framework should be regularly updated as platform policies evolve, with particular attention to election periods and emerging geopolitical conflicts.
 `;
 
 export const POLICY_CATEGORIES = [

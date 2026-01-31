@@ -1,6 +1,6 @@
 # Content Checkmate
 
-AI-powered content policy analyzer for Meta advertising compliance. Analyze your content before you publish to catch policy violations and get actionable recommendations.
+AI-powered content policy analyzer for social media advertising compliance. Analyze your content before you publish to catch policy violations and get actionable recommendations.
 
 ## Demo
 
@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/8766073c-295e-4daa-867e-8516df948a0f
 - **Exclusion Rules**: Exclude legitimate content from flagging
 
 ### Policy Guide
-- Browse Meta advertising policy documentation
+- Browse social media advertising policy documentation
 - Search for specific policy areas
 - Understand what content is allowed vs. restricted
 
