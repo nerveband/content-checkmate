@@ -8,7 +8,7 @@ AI-powered content policy analyzer for social media advertising compliance. Chec
 
 ## Demo
 
-https://github.com/user-attachments/assets/8766073c-295e-4daa-867e-8516df948a0f
+https://github.com/nerveband/content-checkmate/raw/main/promo-video/out/promo_with_audio.mp4
 
 ## Screenshots
 
