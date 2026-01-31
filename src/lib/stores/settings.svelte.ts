@@ -2,31 +2,31 @@ import { browser } from '$app/environment';
 
 const STORAGE_KEY = 'content-checkmate-settings';
 
-// Check for environment variable API key
-const ENV_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const HAS_ENV_API_KEY = ENV_API_KEY.length > 0;
+type Mode = 'community' | 'own-key';
 
 interface Settings {
   apiKey: string;
-  useCustomApiKey: boolean;
+  mode: Mode;
 }
 
 function loadInitialSettings(): Settings {
   const defaults: Settings = {
-    apiKey: HAS_ENV_API_KEY ? ENV_API_KEY : '',
-    useCustomApiKey: false
+    apiKey: '',
+    mode: 'community'
   };
-
-  // If we have an env API key, use it and skip localStorage
-  if (HAS_ENV_API_KEY) {
-    return defaults;
-  }
 
   if (browser) {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
+        // Migrate from old format: if they had an apiKey, they're in own-key mode
+        if (parsed.apiKey && parsed.apiKey.length > 0) {
+          return {
+            apiKey: parsed.apiKey,
+            mode: 'own-key'
+          };
+        }
         return { ...defaults, ...parsed };
       } catch (e) {
         console.error('Failed to parse stored settings:', e);
@@ -39,6 +39,9 @@ function loadInitialSettings(): Settings {
 
 function createSettingsStore() {
   let settings = $state<Settings>(loadInitialSettings());
+  let remainingChecks = $state<number>(5);
+  let checksLimit = $state<number>(5);
+  let usageFetched = $state(false);
 
   function save() {
     if (browser) {
@@ -52,20 +55,69 @@ function createSettingsStore() {
     },
     set apiKey(value: string) {
       settings.apiKey = value;
+      if (value.length > 0) {
+        settings.mode = 'own-key';
+      } else {
+        settings.mode = 'community';
+      }
       save();
     },
-    get useCustomApiKey() {
-      return settings.useCustomApiKey;
+
+    get mode(): Mode {
+      return settings.mode;
     },
-    set useCustomApiKey(value: boolean) {
-      settings.useCustomApiKey = value;
-      save();
-    },
+
     get hasValidApiKey() {
-      return settings.apiKey.length > 0;
+      return settings.mode === 'own-key' && settings.apiKey.length > 0;
     },
-    get isUsingEnvApiKey() {
-      return HAS_ENV_API_KEY;
+
+    get isCommunityMode() {
+      return settings.mode === 'community';
+    },
+
+    get remainingChecks() {
+      return remainingChecks;
+    },
+    set remainingChecks(value: number) {
+      remainingChecks = value;
+    },
+
+    get checksLimit() {
+      return checksLimit;
+    },
+
+    get usageFetched() {
+      return usageFetched;
+    },
+
+    get canAnalyze() {
+      if (settings.mode === 'own-key') return true;
+      return remainingChecks > 0;
+    },
+
+    removeApiKey() {
+      settings.apiKey = '';
+      settings.mode = 'community';
+      save();
+    },
+
+    async fetchUsage() {
+      if (settings.mode === 'own-key') {
+        usageFetched = true;
+        return;
+      }
+      try {
+        const res = await fetch('/api/usage');
+        if (res.ok) {
+          const data = await res.json();
+          remainingChecks = data.remaining;
+          checksLimit = data.limit;
+        }
+      } catch (e) {
+        console.error('Failed to fetch usage:', e);
+      } finally {
+        usageFetched = true;
+      }
     }
   };
 }

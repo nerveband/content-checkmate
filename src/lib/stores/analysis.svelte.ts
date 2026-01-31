@@ -12,7 +12,6 @@ function createAnalysisStore() {
   let uploadedFilePreview = $state<string | null>(null);
   let uploadedFileBase64 = $state<string | null>(null);
   let uploadedFileMimeType = $state<string | null>(null);
-  let isVideo = $state(false);
   let imageDimensions = $state<{ width: number; height: number } | null>(null);
 
   // Text inputs
@@ -73,9 +72,6 @@ function createAnalysisStore() {
     get uploadedFileMimeType() {
       return uploadedFileMimeType;
     },
-    get isVideo() {
-      return isVideo;
-    },
     get imageDimensions() {
       return imageDimensions;
     },
@@ -132,21 +128,16 @@ function createAnalysisStore() {
     async setFile(file: File | null) {
       uploadedFile = file;
       if (file) {
-        isVideo = file.type.startsWith('video/');
         uploadedFileMimeType = file.type;
 
         // Create preview URL
         uploadedFilePreview = URL.createObjectURL(file);
 
-        // Get image dimensions for images (not videos)
-        if (file.type.startsWith('image/')) {
-          try {
-            imageDimensions = await getImageDimensions(file);
-          } catch (err) {
-            console.error('Failed to get image dimensions:', err);
-            imageDimensions = null;
-          }
-        } else {
+        // Get image dimensions
+        try {
+          imageDimensions = await getImageDimensions(file);
+        } catch (err) {
+          console.error('Failed to get image dimensions:', err);
           imageDimensions = null;
         }
 
@@ -165,7 +156,6 @@ function createAnalysisStore() {
         uploadedFilePreview = null;
         uploadedFileBase64 = null;
         uploadedFileMimeType = null;
-        isVideo = false;
         imageDimensions = null;
       }
     },

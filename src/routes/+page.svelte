@@ -5,7 +5,6 @@
   import { historyStore } from '$lib/stores/history.svelte';
   import { analyzeContent, initializeClient, getClient } from '$lib/services/gemini';
   import { generateId } from '$lib/utils/fileUtils';
-  import type { ActiveTab } from '$lib/types';
   import Tabs from '$lib/components/ui/Tabs.svelte';
   import Card from '$lib/components/ui/Card.svelte';
   import Button from '$lib/components/ui/Button.svelte';
@@ -55,16 +54,14 @@
     { id: 'history', label: 'History' }
   ];
 
-  // Auto-initialize Gemini client if env API key is set
+  // Fetch usage on mount for community mode
   onMount(() => {
-    if (settingsStore.isUsingEnvApiKey && !getClient()) {
-      initializeClient(settingsStore.apiKey);
-    }
+    settingsStore.fetchUsage();
   });
 
   async function handleAnalyze() {
-    if (!settingsStore.hasValidApiKey) {
-      analysisStore.error = 'Please add your Gemini API key first (click API Key button in header)';
+    if (!settingsStore.canAnalyze) {
+      analysisStore.error = 'You have used all your free checks for today. Add your own API key for unlimited checks.';
       return;
     }
 
@@ -75,7 +72,8 @@
     elapsedSeconds = 0;
 
     try {
-      if (!getClient()) {
+      // Initialize client if user has their own key
+      if (settingsStore.hasValidApiKey && !getClient()) {
         initializeClient(settingsStore.apiKey);
       }
 
@@ -84,7 +82,6 @@
         analysisStore.uploadedFileMimeType,
         analysisStore.description || undefined,
         analysisStore.ctaText || undefined,
-        analysisStore.isVideo,
         analysisStore.selectedExclusionTags.length > 0 ? analysisStore.selectedExclusionTags : undefined,
         analysisStore.customExclusions || undefined,
         analysisStore.postIntent || undefined,
@@ -119,8 +116,8 @@
   }
 
   async function handleTextOnlyAnalyze() {
-    if (!settingsStore.hasValidApiKey) {
-      analysisStore.error = 'Please add your Gemini API key first';
+    if (!settingsStore.canAnalyze) {
+      analysisStore.error = 'You have used all your free checks for today. Add your own API key for unlimited checks.';
       return;
     }
 
@@ -136,7 +133,8 @@
     elapsedSeconds = 0;
 
     try {
-      if (!getClient()) {
+      // Initialize client if user has their own key
+      if (settingsStore.hasValidApiKey && !getClient()) {
         initializeClient(settingsStore.apiKey);
       }
 
@@ -145,7 +143,6 @@
         null,
         analysisStore.description || undefined,
         analysisStore.ctaText || undefined,
-        false,
         analysisStore.selectedExclusionTags.length > 0 ? analysisStore.selectedExclusionTags : undefined,
         analysisStore.customExclusions || undefined,
         analysisStore.postIntent || undefined,
@@ -239,7 +236,7 @@
               variant="primary"
               size="lg"
               loading={analysisStore.isAnalyzing}
-              disabled={!canAnalyze() || !settingsStore.hasValidApiKey}
+              disabled={!canAnalyze() || !settingsStore.canAnalyze}
               onclick={handleAnalyze}
               class="w-full"
             >
@@ -249,9 +246,9 @@
               {analysisStore.isAnalyzing ? `Analyzing... ${elapsedSeconds}s` : 'Analyze Content'}
             </Button>
 
-            {#if !settingsStore.hasValidApiKey}
+            {#if settingsStore.isCommunityMode && settingsStore.usageFetched}
               <p class="text-sm text-gray-500 text-center mt-2">
-                Add your API key to start analyzing
+                {settingsStore.remainingChecks} free check{settingsStore.remainingChecks !== 1 ? 's' : ''} remaining today
               </p>
             {/if}
           </div>
@@ -267,7 +264,7 @@
 
       <!-- Results -->
       {#if analysisStore.analysisResult}
-        <div class="mt-8">
+        <div class="mt-8" data-results>
           <AnalysisResults result={analysisStore.analysisResult} />
         </div>
       {/if}
@@ -305,7 +302,7 @@
               variant="primary"
               size="lg"
               loading={analysisStore.isAnalyzing}
-              disabled={!canAnalyze() || !settingsStore.hasValidApiKey}
+              disabled={!canAnalyze() || !settingsStore.canAnalyze}
               onclick={handleTextOnlyAnalyze}
               class="w-full"
             >
@@ -314,6 +311,12 @@
               </svg>
               {analysisStore.isAnalyzing ? `Analyzing... ${elapsedSeconds}s` : 'Analyze Text'}
             </Button>
+
+            {#if settingsStore.isCommunityMode && settingsStore.usageFetched}
+              <p class="text-sm text-gray-500 text-center mt-2">
+                {settingsStore.remainingChecks} free check{settingsStore.remainingChecks !== 1 ? 's' : ''} remaining today
+              </p>
+            {/if}
           </div>
         </div>
 

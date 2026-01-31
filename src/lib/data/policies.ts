@@ -1,12 +1,12 @@
 import type { PredefinedExclusionTag } from '$lib/types';
 
 export const PREDEFINED_EXCLUSION_TAGS: PredefinedExclusionTag[] = [
-  { id: 'religious_holidays', label: 'Religious Holidays/Events' },
-  { id: 'cultural_events', label: 'Cultural Celebrations/Events' },
-  { id: 'educational_content', label: 'Educational Content/Information' },
+  { id: 'religious_holidays', label: 'Religious Holidays & Events' },
+  { id: 'cultural_events', label: 'Cultural Celebrations & Events' },
+  { id: 'educational_content', label: 'Educational Content & Information' },
   { id: 'public_service_announcements', label: 'Public Service Announcements (PSAs)' },
-  { id: 'news_reporting', label: 'News Reporting/Journalism' },
-  { id: 'artistic_expression', label: 'Artistic Expression/Performance' },
+  { id: 'news_reporting', label: 'News Reporting & Journalism' },
+  { id: 'artistic_expression', label: 'Artistic Expression & Performance' },
   { id: 'internal_communications', label: 'Internal Company Communications' },
   { id: 'harmless_stock_imagery', label: 'Generic Stock Imagery (clearly non-problematic)' },
 ];

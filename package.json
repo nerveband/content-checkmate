@@ -11,10 +11,13 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "dependencies": {
-    "@google/genai": "^1.0.1"
+    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@google/genai": "^1.0.1",
+    "@netlify/blobs": "^8.1.0"
   },
   "devDependencies": {
-    "@sveltejs/adapter-static": "^3.0.8",
+    "@sveltejs/adapter-netlify": "^4.3.0",
     "@sveltejs/kit": "^2.15.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "autoprefixer": "^10.4.20",

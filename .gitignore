@@ -41,3 +41,8 @@ coverage/
 # Misc
 *.local
 .wrangler/
+.netlify/
+
+# Test assets
+test-image/
+screenshot-*.png

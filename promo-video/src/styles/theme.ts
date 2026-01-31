@@ -1,32 +1,32 @@
 // Content Checkmate Design System - matching the actual app
 
 export const colors = {
-  // Primary Accent
-  accent: '#F59E0B',
-  accentDark: '#D97706',
-  accentLight: '#FEF3C7',
+  // Primary Accent (matching app's #e67a31)
+  accent: '#e67a31',
+  accentDark: '#c4621e',
+  accentLight: '#fef0e6',
 
   // Semantic Colors
-  positive: '#059669',
-  positiveLight: '#D1FAE5',
-  positiveDark: '#047857',
+  positive: '#27856a',
+  positiveLight: '#e6f5f0',
+  positiveDark: '#1d6b55',
 
-  negative: '#DC2626',
-  negativeLight: '#FEE2E2',
-  negativeDark: '#B91C1C',
+  negative: '#c0392b',
+  negativeLight: '#fce8e6',
+  negativeDark: '#a02e23',
 
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
+  warning: '#d4880a',
+  warningLight: '#fef3cd',
 
   lowRisk: '#3B82F6',
   lowRiskLight: '#DBEAFE',
 
   // Neutrals
-  surfacePrimary: '#FAFAFA',
+  surfacePrimary: '#f5f6f8',
   surfaceSecondary: '#FFFFFF',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B7280',
-  textMuted: '#9CA3AF',
+  textPrimary: '#1a1f2e',
+  textSecondary: '#5a6275',
+  textMuted: '#8b93a6',
   border: '#E5E7EB',
 
   // Dark variants for contrast scenes
@@ -35,9 +35,9 @@ export const colors = {
 };
 
 export const fonts = {
-  display: 'Instrument Serif, Georgia, serif',
-  body: 'Inter, system-ui, sans-serif',
-  mono: 'JetBrains Mono, monospace',
+  display: 'IBM Plex Sans, system-ui, sans-serif',
+  body: 'IBM Plex Sans, system-ui, sans-serif',
+  mono: 'IBM Plex Mono, monospace',
 };
 
 export const shadows = {

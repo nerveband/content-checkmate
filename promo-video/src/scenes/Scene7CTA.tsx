@@ -6,6 +6,8 @@ import {
   spring,
   Sequence,
   interpolate,
+  Img,
+  staticFile,
 } from "remotion";
 import { colors, radii } from "../styles/theme";
 import { fontFamily } from "../styles/fonts";
@@ -14,8 +16,9 @@ import { AnimatedText } from "../components/AnimatedText";
 export const Scene7CTA: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const sceneDuration = fps * 13;
 
-  // Pulsing glow effect - more dramatic
+  // Pulsing glow effect
   const glowPulse = 0.6 + 0.4 * Math.sin(frame * 0.15);
 
   // Logo scale with bounce
@@ -29,9 +32,11 @@ export const Scene7CTA: React.FC = () => {
   const logoRotateY = Math.sin(frame * 0.04) * 8;
   const logoRotateX = Math.cos(frame * 0.03) * 4;
 
-  // Background gradient animation
-  const gradientShift = interpolate(frame, [0, fps * 3], [0, 360], {
-    extrapolateRight: "clamp",
+  // URL fade in later
+  const urlOpacity = spring({
+    frame: Math.max(0, frame - fps * 3),
+    fps,
+    config: { damping: 20, stiffness: 100 },
   });
 
   return (
@@ -47,38 +52,29 @@ export const Scene7CTA: React.FC = () => {
         perspective: 1200,
       }}
     >
-      {/* Logo with 3D effect */}
-      <Sequence from={0} durationInFrames={fps * 3} premountFor={fps} layout="none">
+      {/* Logo with 3D effect - persists for full scene */}
+      <Sequence from={0} durationInFrames={sceneDuration} layout="none">
         <div
           style={{
-            width: 80,
-            height: 80,
-            borderRadius: radii.xl,
-            background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentDark} 100%)`,
+            width: 200,
+            height: 200,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             transform: `scale(${logoScale}) rotateY(${logoRotateY}deg) rotateX(${logoRotateX}deg)`,
             transformStyle: "preserve-3d",
-            boxShadow: `0 0 ${50 * glowPulse}px rgba(245, 158, 11, ${0.5 * glowPulse}), 0 8px 32px rgba(0,0,0,0.15)`,
+            filter: `drop-shadow(0 0 ${30 * glowPulse}px rgba(230, 122, 49, ${0.4 * glowPulse}))`,
           }}
         >
-          <svg
-            width="44"
-            height="44"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="2.5"
-          >
-            <path d="M9 12l2 2 4-4" />
-            <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9-9-1.8-9-9 1.8-9 9-9z" />
-          </svg>
+          <Img
+            src={staticFile("mascot.png")}
+            style={{ width: 200, height: 200, objectFit: "contain" }}
+          />
         </div>
       </Sequence>
 
-      {/* Product Name */}
-      <Sequence from={8} durationInFrames={fps * 2.5} premountFor={fps} layout="none">
+      {/* Product Name - persists */}
+      <Sequence from={8} durationInFrames={sceneDuration - 8} layout="none">
         <AnimatedText
           text="Content Checkmate"
           fontSize={44}
@@ -88,8 +84,8 @@ export const Scene7CTA: React.FC = () => {
         />
       </Sequence>
 
-      {/* Tagline */}
-      <Sequence from={fps * 0.8} durationInFrames={fps * 2.2} premountFor={fps} layout="none">
+      {/* Tagline - persists */}
+      <Sequence from={fps * 0.8} durationInFrames={sceneDuration - fps * 0.8} layout="none">
         <AnimatedText
           text="Stop guessing. Start knowing."
           fontSize={24}
@@ -99,8 +95,8 @@ export const Scene7CTA: React.FC = () => {
         />
       </Sequence>
 
-      {/* Platform badges */}
-      <Sequence from={fps * 1.3} durationInFrames={fps * 1.7} premountFor={fps} layout="none">
+      {/* Platform badges - persist */}
+      <Sequence from={fps * 1.3} durationInFrames={sceneDuration - fps * 1.3} layout="none">
         <div
           style={{
             display: "flex",
@@ -132,6 +128,23 @@ export const Scene7CTA: React.FC = () => {
               </div>
             );
           })}
+        </div>
+      </Sequence>
+
+      {/* URL - fades in after badges */}
+      <Sequence from={fps * 3} durationInFrames={sceneDuration - fps * 3} layout="none">
+        <div
+          style={{
+            marginTop: 8,
+            opacity: urlOpacity,
+            fontFamily: fontFamily.body,
+            fontSize: 18,
+            fontWeight: 500,
+            color: colors.textSecondary,
+            letterSpacing: 1,
+          }}
+        >
+          checkmycontent.com
         </div>
       </Sequence>
     </AbsoluteFill>

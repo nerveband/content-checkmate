@@ -16,39 +16,39 @@ export default {
       },
       colors: {
         surface: {
-          primary: '#FAFAFA',
+          primary: '#f5f6f8',
           secondary: '#FFFFFF',
           elevated: '#FFFFFF'
         },
         accent: {
-          DEFAULT: '#F59E0B',
-          light: '#FEF3C7',
-          dark: '#D97706'
+          DEFAULT: '#e67a31',
+          light: '#fef0e6',
+          dark: '#c4621e'
         },
         positive: {
-          DEFAULT: '#059669',
-          light: '#D1FAE5',
-          dark: '#047857'
+          DEFAULT: '#27856a',
+          light: '#e6f5f0',
+          dark: '#1d6b55'
         },
         negative: {
-          DEFAULT: '#DC2626',
-          light: '#FEE2E2',
-          dark: '#B91C1C'
+          DEFAULT: '#c0392b',
+          light: '#fce8e6',
+          dark: '#a02e23'
         },
         warning: {
-          DEFAULT: '#F59E0B',
-          light: '#FEF3C7'
+          DEFAULT: '#d4880a',
+          light: '#fef3cd'
         }
       },
       fontFamily: {
-        display: ['Instrument Serif', 'Georgia', 'serif'],
-        body: ['Satoshi', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace']
+        display: ['"IBM Plex Sans Variable"', '"IBM Plex Sans"', 'sans-serif'],
+        body: ['"IBM Plex Sans Variable"', '"IBM Plex Sans"', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'monospace']
       },
       boxShadow: {
         'subtle': '0 1px 2px rgba(0,0,0,0.05)',
-        'card': '0 4px 6px -1px rgba(0,0,0,0.07)',
-        'elevated': '0 10px 15px -3px rgba(0,0,0,0.08)'
+        'card': '0 1px 4px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.04)',
+        'elevated': '0 4px 20px rgba(0,0,0,0.08)'
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',

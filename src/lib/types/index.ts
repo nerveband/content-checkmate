@@ -4,7 +4,7 @@ export interface AnalysisTableItem {
   issueDescription: string;
   recommendation: string;
   severity?: 'High' | 'Medium' | 'Low' | string;
-  sourceContext?: 'primaryImage' | 'videoFrame' | 'descriptionText' | 'ctaText';
+  sourceContext?: 'primaryImage' | 'descriptionText' | 'ctaText';
   boundingBox?: {
     x_min: number;
     y_min: number;
@@ -18,7 +18,7 @@ export interface AnalysisTableItem {
 
 export interface ExcludedItem {
   id: string;
-  sourceContext?: 'primaryImage' | 'videoFrame' | 'descriptionText' | 'ctaText';
+  sourceContext?: 'primaryImage' | 'descriptionText' | 'ctaText';
   identifiedContent: string;
   matchedRule: string;
   aiNote: string;
@@ -50,7 +50,24 @@ export interface AnalysisResult {
   aiDetection?: AIDetectionResult;
 }
 
-export type FileType = 'image' | 'video';
+export type FileType = 'image';
+
+export interface UsageInfo {
+  remaining: number;
+  limit: number;
+  allowed: boolean;
+}
+
+export interface ProxyAnalysisRequest {
+  base64MediaData: string | null;
+  mimeType: string | null;
+  userDescription?: string;
+  userCta?: string;
+  selectedExclusionTags?: string[];
+  customExclusions?: string;
+  postIntent?: string;
+  isSiepNotApplicable?: boolean;
+}
 
 export interface PredefinedExclusionTag {
   id: string;

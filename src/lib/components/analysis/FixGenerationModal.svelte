@@ -107,12 +107,6 @@
       return;
     }
 
-    // Validate that source is an image (videos not supported)
-    if (!analysisStore.uploadedFileMimeType.startsWith('image/')) {
-      fixGenerationStore.error = 'Source must be an image (videos not supported for fix generation)';
-      return;
-    }
-
     try {
       fixGenerationStore.isGenerating = true;
       fixGenerationStore.error = null;

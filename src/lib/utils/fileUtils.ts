@@ -11,13 +11,8 @@ export function isValidImageType(file: File): boolean {
   return validTypes.includes(file.type);
 }
 
-export function isValidVideoType(file: File): boolean {
-  const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
-  return validTypes.includes(file.type);
-}
-
 export function isValidMediaType(file: File): boolean {
-  return isValidImageType(file) || isValidVideoType(file);
+  return isValidImageType(file);
 }
 
 export function getFileExtension(filename: string): string {
@@ -102,10 +97,7 @@ export function getFileTypeLabel(mimeType: string): string {
     'image/jpg': 'JPEG',
     'image/png': 'PNG',
     'image/gif': 'GIF',
-    'image/webp': 'WebP',
-    'video/mp4': 'MP4',
-    'video/webm': 'WebM',
-    'video/quicktime': 'MOV'
+    'image/webp': 'WebP'
   };
 
   return typeMap[mimeType] || mimeType.split('/')[1]?.toUpperCase() || 'Unknown';

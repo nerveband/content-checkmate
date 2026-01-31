@@ -1,11 +1,14 @@
 # Content Checkmate
 
-AI-powered content policy analyzer for social media advertising compliance. Analyze your content before you publish to catch policy violations and get actionable recommendations.
+![Content Checkmate](screenshots/Content%20Checkmate%20GitHub%20Banner.jpg)
+
+AI-powered content policy analyzer for social media advertising compliance. Check your images and ad copy against platform policies before you publish.
+
+**[Try it free at checkmycontent.com](https://checkmycontent.com)** — 5 free checks per day, no sign-up required.
 
 ## Demo
 
 https://github.com/user-attachments/assets/8766073c-295e-4daa-867e-8516df948a0f
-
 
 ## Screenshots
 
@@ -17,15 +20,20 @@ https://github.com/user-attachments/assets/8766073c-295e-4daa-867e-8516df948a0f
 
 ### Content Analysis
 - **Image Analysis**: Upload images and get detailed policy compliance reports
-- **Video Analysis**: Analyze video content with timestamp-based flagging
 - **Text Analysis**: Analyze descriptions, CTAs, and ad copy
 - **Combined Analysis**: Analyze media with accompanying text
+- **Bounding Box Overlays**: Visual highlighting of flagged content areas
 
 ### AI-Powered Features
 - **Smart Fix Suggestions**: Get AI-generated editing instructions
-- **Image Generation**: Create compliant alternative images
+- **Image Generation**: Create compliant alternative images (own-key mode)
 - **Risk Scoring**: High/Medium/Low severity classifications
+- **AI Detection**: Detect AI-generated imagery
 - **Exclusion Rules**: Exclude legitimate content from flagging
+
+### Two Usage Modes
+- **Community Mode**: 5 free checks per day, no API key needed
+- **Own-Key Mode**: Add your Gemini API key for unlimited checks, fix generation, and image editing
 
 ### Policy Guide
 - Browse social media advertising policy documentation
@@ -39,6 +47,7 @@ https://github.com/user-attachments/assets/8766073c-295e-4daa-867e-8516df948a0f
 - **AI Models**:
   - `gemini-3-flash-preview` - Content analysis
   - `gemini-3-pro-image-preview` - Image generation
+- **Deployment**: Netlify (with server-side API proxy)
 - **Build Tool**: Vite
 
 ## Getting Started
@@ -46,17 +55,21 @@ https://github.com/user-attachments/assets/8766073c-295e-4daa-867e-8516df948a0f
 ### Prerequisites
 
 - Node.js 18+
-- A Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+- A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/content-checkmate.git
+git clone https://github.com/nerveband/content-checkmate.git
 cd content-checkmate
 
 # Install dependencies
 npm install
+
+# Set up environment (for server-side proxy)
+cp .env.example .env.local
+# Edit .env.local and add your GEMINI_API_KEY
 
 # Start development server
 npm run dev
@@ -64,21 +77,19 @@ npm run dev
 
 ### Configuration
 
-1. Click the **API Key** button in the header
-2. Enter your Gemini API key
-3. Start analyzing content!
+**Community mode** works out of the box with the server-side proxy. For **own-key mode**, users can enter their Gemini API key directly in the browser UI.
 
-Alternatively, create a `.env` file:
+For the server-side proxy, set the `GEMINI_API_KEY` environment variable:
 
 ```env
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ## Usage
 
 ### Analyzing Content
 
-1. **Upload Media**: Drag & drop or click to upload an image/video
+1. **Upload Media**: Drag & drop or click to upload an image
 2. **Add Context**: Enter description, CTA, and post intent
 3. **Set Exclusions**: Select any content to exclude from flagging
 4. **Analyze**: Click "Analyze Content" to get results
@@ -99,18 +110,17 @@ VITE_GEMINI_API_KEY=your_gemini_api_key_here
 
 ## Deployment
 
-Build for production:
+### Netlify (Recommended)
 
 ```bash
 npm run build
 ```
 
-The output will be in the `build/` directory. Deploy to any static hosting:
+Set `GEMINI_API_KEY` as an environment variable in your Netlify dashboard. The app uses `@sveltejs/adapter-netlify` and Netlify Blobs for rate limiting.
 
-- **Netlify**: Drag & drop the build folder
-- **GitHub Pages**: Push build to gh-pages branch
-- **AWS S3**: Upload to S3 bucket with static hosting
-- **Cloudflare Pages**: Connect your repo
+### Self-Hosting
+
+Swap `adapter-netlify` for `adapter-node` in `svelte.config.js` for any Node.js hosting environment. Rate limiting will use an in-memory store.
 
 ## Development
 
@@ -135,16 +145,20 @@ src/
 ├── lib/
 │   ├── components/
 │   │   ├── ui/          # Base UI components
-│   │   ├── layout/      # Header, Footer
+│   │   ├── layout/      # Header
 │   │   ├── analysis/    # Analysis-related components
 │   │   ├── editor/      # Image editor components
+│   │   ├── history/     # Analysis history
 │   │   └── guide/       # Policy guide components
 │   ├── services/        # API integrations
+│   ├── server/          # Server-side proxy & rate limiting
+│   ├── shared/          # Shared logic (client & server)
 │   ├── stores/          # Svelte 5 runes stores
 │   ├── types/           # TypeScript types
 │   ├── data/            # Policy data
 │   └── utils/           # Utility functions
 ├── routes/
+│   ├── api/             # Server API routes
 │   ├── +layout.svelte   # App layout
 │   └── +page.svelte     # Main page
 └── app.css              # Global styles
@@ -163,4 +177,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Built with Svelte 5 and Gemini AI**
+Built by [Ashraf Ali](https://ashrafali.net) | [wavedepth](https://wavedepth.com)

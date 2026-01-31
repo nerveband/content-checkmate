@@ -1,5 +1,5 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
+import { useCurrentFrame, useVideoConfig, spring, interpolate, Img, staticFile } from "remotion";
 import { colors, radii, shadows } from "../styles/theme";
 import { fontFamily } from "../styles/fonts";
 
@@ -52,27 +52,15 @@ export const AppMockup: React.FC<AppMockupProps> = ({
         }}
       >
         {/* Logo */}
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: radii.lg,
-            background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentDark} 100%)`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
-            <path d="M9 12l2 2 4-4" />
-            <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9-9-1.8-9-9 1.8-9 9-9z" />
-          </svg>
-        </div>
+        <Img
+          src={staticFile("mascot.png")}
+          style={{ width: 36, height: 36, objectFit: "contain" }}
+        />
         <div>
           <div
             style={{
               fontFamily: fontFamily.display,
-              fontWeight: 400,
+              fontWeight: 600,
               fontSize: 18,
               color: colors.textPrimary,
             }}

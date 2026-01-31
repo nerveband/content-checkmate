@@ -1,9 +1,9 @@
 import { Composition } from "remotion";
 import { ContentCheckmatePromo } from "./ContentCheckmatePromo";
 
-// 4:3 ratio, 30 seconds at 30fps = 900 frames
+// 4:3 ratio, 40 seconds at 30fps = 1200 frames
 const FPS = 30;
-const DURATION_SECONDS = 30;
+const DURATION_SECONDS = 40;
 const WIDTH = 1024;
 const HEIGHT = 768; // 4:3 ratio
 

@@ -1,7 +1,8 @@
 import { getClient } from './gemini';
 import type { AIDetectionResult } from '$lib/types';
+import { AI_DETECTION_MODEL } from '$lib/shared/prompts';
 
-export const AI_DETECTION_MODEL = 'gemini-2.0-flash-exp';
+export { AI_DETECTION_MODEL };
 
 /**
  * Detects if an image appears to be AI-generated

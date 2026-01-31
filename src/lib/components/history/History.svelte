@@ -32,9 +32,6 @@
   }
 
   function handleLoadAnalysis(entry: typeof historyStore.analyses[0]) {
-    // Switch to Media & Text tab
-    analysisStore.activeTab = 'mediaAndText';
-
     // Restore the analysis result
     analysisStore.analysisResult = entry.analysisResult;
 
@@ -42,6 +39,17 @@
     if (entry.filePreview) {
       analysisStore.uploadedFilePreview = entry.filePreview;
     }
+
+    // Switch to Media & Text tab (after setting data so it renders immediately)
+    analysisStore.activeTab = 'mediaAndText';
+
+    // Scroll to results after tab renders
+    setTimeout(() => {
+      const resultsEl = document.querySelector('[data-results]');
+      if (resultsEl) {
+        resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   }
 
   function handleLoadGeneration(entry: typeof historyStore.generations[0]) {

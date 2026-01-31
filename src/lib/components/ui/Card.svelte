@@ -5,10 +5,11 @@
     class?: string;
     hover?: boolean;
     padding?: 'none' | 'sm' | 'md' | 'lg';
+    onclick?: (e: MouseEvent) => void;
     children: Snippet;
   }
 
-  let { class: className = '', hover = true, padding = 'md', children }: Props = $props();
+  let { class: className = '', hover = true, padding = 'md', onclick, children }: Props = $props();
 
   const paddingClasses = {
     none: '',
@@ -20,6 +21,9 @@
 
 <div
   class="bg-white rounded-xl border border-gray-200 shadow-card transition-all duration-200 {hover ? 'hover:shadow-elevated hover:border-gray-300' : ''} {paddingClasses[padding]} {className}"
+  {onclick}
+  role={onclick ? 'button' : undefined}
+  tabindex={onclick ? 0 : undefined}
 >
   {@render children()}
 </div>

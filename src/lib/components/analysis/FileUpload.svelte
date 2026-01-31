@@ -34,7 +34,7 @@
 
   function handleFile(file: File) {
     if (!isValidMediaType(file)) {
-      analysisStore.error = 'Please upload a valid image or video file (JPEG, PNG, GIF, WebP, MP4, WebM)';
+      analysisStore.error = 'Please upload a valid image file (JPEG, PNG, GIF, WebP)';
       return;
     }
     analysisStore.setFile(file);
@@ -64,7 +64,7 @@
       <input
         bind:this={fileInputRef}
         type="file"
-        accept="image/*,video/*"
+        accept="image/*"
         class="hidden"
         onchange={handleFileSelect}
       />
@@ -77,7 +77,7 @@
         </div>
         <div>
           <p class="text-gray-900 font-medium">Drop your file here, or click to browse</p>
-          <p class="text-sm text-gray-500 mt-1">Supports images (JPEG, PNG, GIF, WebP) and videos (MP4, WebM)</p>
+          <p class="text-sm text-gray-500 mt-1">Supports JPEG, PNG, GIF, and WebP images</p>
         </div>
       </div>
 
@@ -93,19 +93,11 @@
       <div class="flex items-start gap-4">
         <!-- Preview Thumbnail -->
         <div class="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-          {#if analysisStore.isVideo}
-            <video
-              src={analysisStore.uploadedFilePreview}
-              class="w-full h-full object-cover"
-              muted
-            ></video>
-          {:else}
-            <img
-              src={analysisStore.uploadedFilePreview}
-              alt="Preview"
-              class="w-full h-full object-cover"
-            />
-          {/if}
+          <img
+            src={analysisStore.uploadedFilePreview}
+            alt="Preview"
+            class="w-full h-full object-cover"
+          />
         </div>
 
         <!-- File Info -->
@@ -117,7 +109,7 @@
               <span class="mx-1.5">·</span>
               {getFileTypeLabel(analysisStore.uploadedFile.type)}
             </p>
-            {#if !analysisStore.isVideo && analysisStore.imageDimensions}
+            {#if analysisStore.imageDimensions}
               <p>
                 {analysisStore.imageDimensions.width} × {analysisStore.imageDimensions.height}
                 <span class="mx-1.5">·</span>
@@ -146,7 +138,7 @@
     <input
       bind:this={fileInputRef}
       type="file"
-      accept="image/*,video/*"
+      accept="image/*"
       class="hidden"
       onchange={handleFileSelect}
     />

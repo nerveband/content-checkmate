@@ -20,12 +20,12 @@
   }
 </script>
 
-<div class="flex border-b border-gray-200 {className}">
+<div class="flex border-b border-gray-200 overflow-x-auto scrollbar-none {className}">
   {#each tabs as tab}
     <button
       type="button"
       onclick={() => handleTabClick(tab.id)}
-      class="relative px-5 py-3 text-sm font-medium transition-colors {activeTab === tab.id ? 'text-accent' : 'text-gray-600 hover:text-gray-900'}"
+      class="relative px-5 py-3 text-sm font-medium transition-colors whitespace-nowrap {activeTab === tab.id ? 'text-accent' : 'text-gray-600 hover:text-gray-900'}"
     >
       <span class="flex items-center gap-2">
         {#if tab.icon}

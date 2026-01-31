@@ -89,7 +89,7 @@ export const AnimatedText: React.FC<AnimatedTextProps> = ({
       style={{
         fontSize,
         color,
-        fontWeight: isDisplay ? 400 : fontWeight,
+        fontWeight: isDisplay ? 600 : fontWeight,
         fontFamily: isDisplay ? fontFamily.display : fontFamily.body,
         opacity,
         transform,
